@@ -20,12 +20,16 @@
 
   // When editing becomes true (from anywhere — local dblclick OR external
   // set via keyboard.ts on Enter), seed draftText and focus the input
-  // once the DOM has rendered.
+  // once the DOM has rendered. Only select-all when the input is FRESHLY
+  // gaining focus, not when the reactive re-fires due to editingPath
+  // changing but staying on this same node (Tab carries edit cursor).
   $: if (editing) {
     draftText = node.text;
     tick().then(() => {
-      inputEl?.focus();
-      inputEl?.select();
+      if (inputEl && document.activeElement !== inputEl) {
+        inputEl.focus();
+        inputEl.select();
+      }
     });
   }
 
