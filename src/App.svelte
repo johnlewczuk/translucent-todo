@@ -12,6 +12,7 @@
 
   let rootEl: HTMLElement;
   let listEl: HTMLElement;
+  let listInnerEl: HTMLElement;
 
   const WIDTH = 320;
   const HEADER_H = 14;
@@ -30,10 +31,12 @@
       await win.setSize(new LogicalSize(PILL_W, PILL_H));
       return;
     }
-    const contentH = listEl?.scrollHeight ?? 0;
+    // Measure the inner wrapper (intrinsic height), NOT listEl
+    // (which is flex:1 and always fills available space).
+    const contentH = listInnerEl?.offsetHeight ?? 0;
     const desired = Math.max(
       HEADER_H + LIST_PAD + MIN_ROWS_H,
-      Math.min(MAX_H, HEADER_H + contentH),
+      Math.min(MAX_H, HEADER_H + LIST_PAD + contentH),
     );
     await win.setSize(new LogicalSize(WIDTH, desired));
   }
@@ -65,10 +68,11 @@
     await tick();
     syncWindowSize();
 
-    // Re-sync on every state and mode change. Subscriptions fire reliably
-    // even when state.update() returns the same object reference (which
-    // breaks naive $: reactivity in Svelte 5 runes mode).
-    const stateUnsub = state.subscribe(() => { syncWindowSize(); });
+    // ResizeObserver on the inner wrapper (which is intrinsically sized,
+    // unlike .list which is flex:1) fires whenever content height changes.
+    const ro = new ResizeObserver(() => { syncWindowSize(); });
+    if (listInnerEl) ro.observe(listInnerEl);
+
     const modeUnsub = mode.subscribe(() => { syncWindowSize(); });
 
     const win = getCurrentWindow();
@@ -82,7 +86,7 @@
 
     return () => {
       cleanup();
-      stateUnsub();
+      ro.disconnect();
       modeUnsub();
       unlistenFocus();
     };
@@ -95,12 +99,14 @@
   <div class="root" bind:this={rootEl}>
     <div class="header" data-tauri-drag-region></div>
     <div class="list" bind:this={listEl}>
-      {#each flatten($state.items) as row (row.node.id)}
-        <TodoItem node={row.node} depth={row.depth} path={row.path} />
-      {/each}
-      {#if $state.items.length === 0}
-        <div class="empty">Press Enter to begin</div>
-      {/if}
+      <div class="list-inner" bind:this={listInnerEl}>
+        {#each flatten($state.items) as row (row.node.id)}
+          <TodoItem node={row.node} depth={row.depth} path={row.path} />
+        {/each}
+        {#if $state.items.length === 0}
+          <div class="empty">Press Enter to begin</div>
+        {/if}
+      </div>
     </div>
     <Toast />
   </div>
