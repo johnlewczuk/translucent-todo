@@ -23,6 +23,7 @@
   const MAX_H = 480;
   const PILL_W = 120;
   const PILL_H = 36;
+  const HELP_MIN_H = 300;     // enough to show the full shortcut panel
 
   async function syncWindowSize() {
     if (!rootEl) return;
@@ -36,10 +37,14 @@
     // Measure the inner wrapper (intrinsic height), NOT listEl
     // (which is flex:1 and always fills available space).
     const contentH = listInnerEl?.offsetHeight ?? 0;
-    const desired = Math.max(
+    let desired = Math.max(
       HEADER_H + LIST_PAD + MIN_ROWS_H,
       Math.min(MAX_H, HEADER_H + LIST_PAD + contentH),
     );
+    // Keep at least enough room for the help panel while it's open
+    if (get(helpOpen)) {
+      desired = Math.max(desired, HELP_MIN_H);
+    }
     await win.setSize(new LogicalSize(WIDTH, desired));
   }
 
@@ -76,6 +81,7 @@
     if (listInnerEl) ro.observe(listInnerEl);
 
     const modeUnsub = mode.subscribe(() => { syncWindowSize(); });
+    const helpUnsub = helpOpen.subscribe(() => { syncWindowSize(); });
 
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
@@ -90,6 +96,7 @@
       cleanup();
       ro.disconnect();
       modeUnsub();
+      helpUnsub();
       unlistenFocus();
     };
   });
