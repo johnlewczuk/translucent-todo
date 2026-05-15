@@ -291,6 +291,25 @@ class TodoApp(Gtk.Application):
 
         win.present()
 
+        # Set always-on-top via wmctrl (X11). Best-effort; log if missing.
+        def set_always_on_top():
+            import subprocess, shutil
+            if not shutil.which("wmctrl"):
+                print("[translucent-todo] wmctrl not found; window will not stay on top. "
+                      "Install with: sudo apt install wmctrl", file=sys.stderr)
+                return False
+            try:
+                subprocess.run(
+                    ["wmctrl", "-r", "translucent-todo", "-b", "add,above"],
+                    check=False, timeout=2,
+                )
+            except subprocess.SubprocessError as e:
+                print(f"[translucent-todo] wmctrl failed: {e}", file=sys.stderr)
+            return False  # one-shot
+
+        # Give the WM a beat to register the window, then set the hint.
+        GLib.timeout_add(200, set_always_on_top)
+
 
 def main():
     app = TodoApp()
