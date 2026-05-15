@@ -1,4 +1,5 @@
 import { get } from "svelte/store";
+import { tick } from "svelte";
 import { state, focusedPath, editingPath, mode, helpOpen } from "./stores";
 import { scheduleSave } from "./storage";
 import {
@@ -51,7 +52,8 @@ export function installKeyboardHandler(): () => void {
     const inInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
 
     // Tab and Shift+Tab work in BOTH edit and non-edit mode. If editing,
-    // commit the input value first, then indent/outdent.
+    // we save the input's current value and indent/outdent the row WITHOUT
+    // leaving edit mode — the user keeps typing in the same input.
     const isTab = e.key === "Tab" || e.code === "Tab" || e.key === "ISO_Left_Tab";
     if (isTab) {
       e.preventDefault();
@@ -61,23 +63,39 @@ export function installKeyboardHandler(): () => void {
         e.key === "ISO_Left_Tab";
 
       const editPath = get(editingPath);
-      if (editPath && inInput) {
-        const v = (target as HTMLInputElement).value;
-        state.update((s) => {
-          setText(s.items, editPath, v);
-          return s;
-        });
-        editingPath.set(null);
-      }
+      const wasEditing = editPath !== null;
+      const draftValue = wasEditing && inInput
+        ? (target as HTMLInputElement).value
+        : null;
 
       const fp = get(focusedPath);
       if (fp) {
         state.update((s) => {
+          if (wasEditing && draftValue !== null && editPath) {
+            setText(s.items, editPath, draftValue);
+          }
           const np = isShift ? outdent(s.items, fp) : indent(s.items, fp);
-          if (np !== null) focusedPath.set(np);
+          if (np !== null) {
+            focusedPath.set(np);
+            // Carry the edit cursor with the moved row so the user keeps typing
+            if (wasEditing) editingPath.set(np);
+          }
           scheduleSave(s);
           return s;
         });
+
+        // Re-assert focus on next tick in case Svelte remounted the input
+        if (wasEditing) {
+          tick().then(() => {
+            const inp = document.querySelector("input.edit") as HTMLInputElement | null;
+            if (inp && document.activeElement !== inp) {
+              inp.focus();
+              // place caret at end so typing continues naturally
+              const len = inp.value.length;
+              try { inp.setSelectionRange(len, len); } catch {}
+            }
+          });
+        }
       }
       return;
     }
