@@ -9,7 +9,7 @@
   import Toast from "./lib/Toast.svelte";
   import Pill from "./lib/Pill.svelte";
   import Help from "./lib/Help.svelte";
-  import { helpOpen } from "./lib/stores";
+  import { helpOpen, windowFocused } from "./lib/stores";
   import { installKeyboardHandler } from "./lib/keyboard";
 
   let rootEl: HTMLElement;
@@ -19,7 +19,7 @@
   const WIDTH = 320;
   const HEADER_H = 14;
   const LIST_PAD = 16;        // .list top+bottom padding (4 + 12)
-  const MIN_ROWS_H = 42;      // ~ one row + tiny breathing room
+  const MIN_ROWS_H = 0;       // let content drive the height
   const MAX_H = 480;
   const PILL_W = 120;
   const PILL_H = 36;
@@ -97,6 +97,7 @@
 
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
+      windowFocused.set(focused);
       const s = get(state);
       if (!focused && s.mini_mode_enabled && get(mode) === "expanded") {
         mode.set("pill");
@@ -118,7 +119,7 @@
 {#if $mode === "pill"}
   <Pill />
 {:else}
-  <div class="root" bind:this={rootEl}>
+  <div class="root" class:idle={!$windowFocused} bind:this={rootEl}>
     <div class="header" data-tauri-drag-region></div>
     <div class="list" bind:this={listEl}>
       <div class="list-inner" bind:this={listInnerEl}>

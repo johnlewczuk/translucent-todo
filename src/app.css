@@ -35,6 +35,20 @@ html, body {
   -webkit-backdrop-filter: blur(28px) saturate(170%);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.30);
   overflow: hidden;
+  transition: background 220ms ease, box-shadow 220ms ease,
+              backdrop-filter 220ms ease, -webkit-backdrop-filter 220ms ease;
+}
+
+/* When the window is not focused AND not hovered, drop the chrome.
+   The list text still floats over the desktop. */
+.root.idle:not(:hover) {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+.root.idle:not(:hover) .header::before {
+  background: transparent;
 }
 
 /* Slim, almost-invisible drag strip with a faint dot indicator */
