@@ -37,3 +37,16 @@ def add_sibling_after(items: list[dict], path: list[int], text: str = "") -> lis
     parent, idx = find_parent_and_index(items, path)
     parent.insert(idx + 1, new_node(text))
     return path[:-1] + [idx + 1]
+
+
+def indent(items: list[dict], path: list[int]) -> list[int] | None:
+    """Move node at `path` to become the last child of its previous sibling.
+    Returns new path, or None if no previous sibling exists."""
+    parent, idx = find_parent_and_index(items, path)
+    if idx == 0:
+        return None
+    node = parent.pop(idx)
+    new_parent = parent[idx - 1]
+    new_parent["collapsed"] = False  # auto-expand so the move is visible
+    new_parent["children"].append(node)
+    return path[:-1] + [idx - 1, len(new_parent["children"]) - 1]

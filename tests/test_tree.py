@@ -62,3 +62,37 @@ def test_add_sibling_after_nested():
     assert len(items[0]["children"]) == 2
     assert items[0]["children"][1]["text"] == "a.1"
     assert new_path == [0, 1]
+
+from tree import indent
+
+
+def test_indent_with_previous_sibling():
+    items = [new_node("a"), new_node("b")]
+    new_path = indent(items, [1])
+    assert new_path == [0, 0]
+    assert len(items) == 1
+    assert items[0]["children"][0]["text"] == "b"
+
+
+def test_indent_no_previous_sibling_returns_none():
+    items = [new_node("a")]
+    assert indent(items, [0]) is None
+    assert len(items) == 1  # unchanged
+
+
+def test_indent_preserves_subtree_and_collapsed_state():
+    items = [new_node("a"), new_node("b")]
+    items[1]["collapsed"] = True
+    items[1]["children"].append(new_node("b.0"))
+    indent(items, [1])
+    moved = items[0]["children"][0]
+    assert moved["text"] == "b"
+    assert moved["collapsed"] is True
+    assert moved["children"][0]["text"] == "b.0"
+
+
+def test_indent_auto_expands_new_parent():
+    items = [new_node("a"), new_node("b")]
+    items[0]["collapsed"] = True
+    indent(items, [1])
+    assert items[0]["collapsed"] is False
