@@ -7,6 +7,7 @@ import {
   outdent,
   deleteNode,
   toggleDone,
+  newNode,
   type Node,
 } from "./tree";
 
@@ -56,7 +57,24 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
-    if (path === null) return;
+    // Enter on empty state creates the first row
+    if (path === null) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        state.update((s) => {
+          if (s.items.length === 0) {
+            s.items.push(newNode(""));
+            focusedPath.set([0]);
+          } else {
+            // Items exist but nothing focused — focus the first
+            focusedPath.set([0]);
+          }
+          scheduleSave(s);
+          return s;
+        });
+      }
+      return;
+    }
 
     if (e.key === "Enter") {
       e.preventDefault();

@@ -1,67 +1,75 @@
 * { box-sizing: border-box; }
 
+:root {
+  --fg: rgba(255, 255, 255, 0.92);
+  --fg-muted: rgba(255, 255, 255, 0.50);
+  --fg-faint: rgba(255, 255, 255, 0.18);
+  --fg-trace: rgba(255, 255, 255, 0.08);
+  --accent: #7dd3df;
+  --row-hover: rgba(255, 255, 255, 0.04);
+}
+
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
   background: transparent;
-  color: white;
+  color: var(--fg);
   font-family: "Inter", "SF Pro Text", "Segoe UI", "Cantarell", sans-serif;
   font-size: 13px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
 
 .root {
+  position: relative;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(24px) saturate(170%);
-  -webkit-backdrop-filter: blur(24px) saturate(170%);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.30);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.30);
   overflow: hidden;
 }
 
+/* Slim, almost-invisible drag strip with a faint dot indicator */
 .header {
-  height: 26px;
-  background: rgba(20, 22, 30, 0.78);
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-app-region: drag;
   cursor: grab;
+  flex-shrink: 0;
 }
 .header:active { cursor: grabbing; }
 .header::before {
   content: "";
-  width: 36px;
-  height: 3px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.30);
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--fg-trace);
+  transition: background 160ms ease;
+}
+.header:hover::before {
+  background: var(--fg-muted);
 }
 
 .list {
   flex: 1;
   overflow-y: auto;
-  padding: 6px 4px;
+  padding: 4px 0 12px;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background-color 120ms ease;
-}
-
-.row:hover { background-color: rgba(255, 255, 255, 0.08); }
-
-.done {
-  text-decoration: line-through;
-  opacity: 0.45;
-  font-style: italic;
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-weight: 300;
 }

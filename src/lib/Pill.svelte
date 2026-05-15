@@ -24,9 +24,10 @@
 </script>
 
 <button class="pill" on:click={expand} aria-label="Expand todo list">
-  <span class="icon">●</span>
   {#if incompleteCount > 0}
     <span class="count">{incompleteCount}</span>
+  {:else}
+    <span class="dot"></span>
   {/if}
 </button>
 
@@ -34,23 +35,32 @@
   .pill {
     width: 100vw;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(24px) saturate(170%);
-    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    background: rgba(255, 255, 255, 0.10);
+    backdrop-filter: blur(28px) saturate(170%);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
     border: none;
     border-radius: 18px;
-    color: white;
+    color: var(--fg);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    font-size: 13px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 4px 18px rgba(0, 0, 0, 0.2);
+    padding: 0;
+    transition: background 140ms ease;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.25);
   }
-  .pill:hover { background: rgba(255, 255, 255, 0.14); }
-  .icon { color: #9ec1ff; font-size: 10px; }
-  .count { font-weight: 500; }
+  .pill:hover { background: rgba(255, 255, 255, 0.16); }
+
+  .count { line-height: 1; }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fg-muted);
+  }
 </style>

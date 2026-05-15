@@ -2,9 +2,8 @@
   import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-  import { state, mode, showToast, focusedPath } from "./lib/stores";
-  import { loadState, scheduleSave } from "./lib/storage";
-  import { addSiblingAfter, newNode } from "./lib/tree";
+  import { state, mode, showToast } from "./lib/stores";
+  import { loadState } from "./lib/storage";
   import type { Node } from "./lib/tree";
   import TodoItem from "./lib/TodoItem.svelte";
   import Toast from "./lib/Toast.svelte";
@@ -45,20 +44,6 @@
       }
     });
     return out;
-  }
-
-  function onAddClick() {
-    state.update((s) => {
-      if (s.items.length === 0) {
-        s.items.push(newNode(""));
-        focusedPath.set([0]);
-      } else {
-        const np = addSiblingAfter(s.items, [s.items.length - 1]);
-        focusedPath.set(np);
-      }
-      scheduleSave(s);
-      return s;
-    });
   }
 
   onMount(async () => {
@@ -117,42 +102,10 @@
         <TodoItem node={row.node} depth={row.depth} path={row.path} />
       {/each}
       {#if $state.items.length === 0}
-        <div class="empty">No items yet</div>
+        <div class="empty">Press Enter to begin</div>
       {/if}
     </div>
-    <button class="add-btn" on:click={onAddClick} aria-label="Add item">+</button>
     <Toast />
   </div>
 {/if}
 
-<style>
-  .root { position: relative; }
-
-  .empty {
-    padding: 16px;
-    text-align: center;
-    opacity: 0.5;
-    font-size: 12px;
-  }
-
-  .add-btn {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    color: white;
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-    transition: all 140ms ease;
-  }
-  .add-btn:hover {
-    background: rgba(255, 255, 255, 0.20);
-    border-color: rgba(255, 255, 255, 0.40);
-  }
-  .add-btn:active { background: rgba(255, 255, 255, 0.28); }
-</style>

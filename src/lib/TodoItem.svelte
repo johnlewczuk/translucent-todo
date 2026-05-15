@@ -71,16 +71,20 @@
 <div
   class="row"
   class:focused
+  class:done={node.done}
   class:drop-before={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "before"}
   class:drop-after={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "after"}
   class:drop-child={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "child"}
   class:dragging={$dragState?.fromPath?.join(",") === path.join(",")}
   data-path={path.join(",")}
-  style="padding-left: {depth * 16 + 4}px;"
   on:click={onRowClick}
   role="treeitem"
   tabindex="0"
 >
+  {#each Array(depth) as _, i (i)}
+    <span class="indent"></span>
+  {/each}
+
   <div
     class="grip"
     on:pointerdown|stopPropagation={(e) => {
@@ -112,22 +116,14 @@
     aria-label="Drag handle"
     role="button"
     tabindex="0"
-  >⋮⋮</div>
-  <button
-    class="expander"
-    class:invisible={node.children.length === 0}
-    on:click|stopPropagation={onExpanderClick}
-    aria-label={node.collapsed ? "expand" : "collapse"}
-  >
-    {node.collapsed ? "▸" : "▾"}
-  </button>
+  ></div>
 
-  <input
-    type="checkbox"
-    checked={node.done}
-    on:change={onCheckChange}
-    on:click|stopPropagation
-  />
+  <button
+    class="check"
+    class:checked={node.done}
+    on:click|stopPropagation={onCheckChange}
+    aria-label={node.done ? "Mark as not done" : "Mark as done"}
+  ></button>
 
   {#if editing}
     <input
@@ -140,109 +136,154 @@
     />
   {:else}
     <span
-      class:done={node.done}
       on:dblclick|stopPropagation={startEdit}
       class="text"
     >
-      {node.text || "(empty)"}
+      {node.text}
     </span>
   {/if}
+
+  <button
+    class="expander"
+    class:visible={node.children.length > 0}
+    on:click|stopPropagation={onExpanderClick}
+    aria-label={node.collapsed ? "expand" : "collapse"}
+  >
+    {node.collapsed ? "›" : "⌄"}
+  </button>
 </div>
 
 <style>
   .row {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: background-color 120ms ease;
+    min-height: 26px;
+    padding: 2px 12px 2px 6px;
+    transition: background-color 100ms ease;
     cursor: default;
   }
-  .row:hover { background-color: rgba(255, 255, 255, 0.08); }
-  .row.focused { background-color: rgba(255, 255, 255, 0.16); }
+  .row:hover { background-color: var(--row-hover); }
 
-  .expander {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.65);
-    cursor: pointer;
-    padding: 0 2px;
-    font-size: 11px;
-    width: 16px;
-    text-align: center;
-  }
-  .expander.invisible { visibility: hidden; }
-  .expander:hover { color: white; }
-
-  input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border: 1.5px solid rgba(255, 255, 255, 0.45);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.10);
-    cursor: pointer;
-    transition: all 140ms ease;
-    position: relative;
-  }
-  input[type="checkbox"]:hover {
-    border-color: rgba(255, 255, 255, 0.75);
-    background: rgba(255, 255, 255, 0.14);
-  }
-  input[type="checkbox"]:checked {
-    background: linear-gradient(135deg, #9ec1ff, #6f93d6);
-    border-color: rgba(158, 193, 255, 0.55);
-  }
-  input[type="checkbox"]:checked::after {
-    content: "✓";
+  /* Focus indicator: cyan tick on the left edge */
+  .row.focused::before {
+    content: "";
     position: absolute;
-    top: -2px;
-    left: 1px;
-    color: #0d1018;
-    font-size: 11px;
-    font-weight: bold;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--accent);
   }
 
-  .text {
-    flex: 1;
-    padding: 2px 4px;
+  /* Indent guides */
+  .indent {
+    width: 16px;
+    height: 100%;
+    flex-shrink: 0;
+    border-left: 1px solid var(--fg-trace);
+    margin-left: 6px;
   }
-  .done { text-decoration: line-through; opacity: 0.45; font-style: italic; }
 
+  /* Grip: invisible at rest, fades in on row hover */
   .grip {
-    width: 12px;
-    text-align: center;
+    width: 10px;
+    height: 18px;
+    flex-shrink: 0;
     cursor: grab;
-    color: rgba(255, 255, 255, 0.30);
-    font-size: 10px;
-    user-select: none;
-    letter-spacing: -3px;
+    opacity: 0;
+    transition: opacity 140ms ease;
+    background-image: radial-gradient(circle, var(--fg-muted) 1px, transparent 1px);
+    background-size: 3px 4px;
+    background-repeat: repeat;
+    background-position: center;
+    margin-right: 4px;
   }
   .grip:active { cursor: grabbing; }
+  .row:hover .grip { opacity: 0.55; }
+  .grip:hover { opacity: 1 !important; }
 
-  .row.dragging { opacity: 0.4; }
+  /* Checkbox: minimal ring → fills on done */
+  .check {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--fg-muted);
+    border-radius: 50%;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease;
+    margin-right: 10px;
+  }
+  .check:hover {
+    border-color: var(--fg);
+  }
+  .check.checked {
+    background: var(--fg);
+    border-color: var(--fg);
+  }
 
-  .row.drop-before {
-    box-shadow: inset 0 2px 0 0 #9ec1ff;
+  /* Label */
+  .text {
+    flex: 1;
+    padding: 0;
+    color: var(--fg);
+    transition: color 140ms ease, opacity 140ms ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .row.drop-after {
-    box-shadow: inset 0 -2px 0 0 #9ec1ff;
-  }
-  .row.drop-child {
-    box-shadow: inset 0 0 0 2px rgba(158, 193, 255, 0.5);
+  .row.done .text {
+    color: var(--fg-muted);
+    opacity: 0.55;
   }
 
+  /* Expander: hidden until row has children AND row is hovered */
+  .expander {
+    width: 14px;
+    height: 18px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--fg-muted);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 140ms ease, color 100ms ease;
+  }
+  .expander.visible {
+    /* visible when row has children; still fades fully in on hover */
+    opacity: 0.35;
+  }
+  .row:hover .expander.visible { opacity: 0.85; }
+  .expander:hover { color: var(--fg); }
+  .expander:not(.visible) { visibility: hidden; }
+
+  /* Edit input: no chrome, just a caret */
   .edit {
     flex: 1;
-    background: rgba(255, 255, 255, 0.10);
-    border: 1px solid rgba(158, 193, 255, 0.40);
-    border-radius: 4px;
-    padding: 1px 4px;
-    color: white;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    color: var(--fg);
     font-family: inherit;
     font-size: inherit;
-    outline: none;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    caret-color: var(--accent);
+  }
+
+  /* Drag state */
+  .row.dragging { opacity: 0.35; }
+  .row.drop-before { box-shadow: inset 0 1.5px 0 0 var(--accent); }
+  .row.drop-after { box-shadow: inset 0 -1.5px 0 0 var(--accent); }
+  .row.drop-child {
+    box-shadow: inset 0 0 0 1px var(--accent);
+    background-color: rgba(125, 211, 223, 0.08);
   }
 </style>
