@@ -30,6 +30,65 @@ class TodoApp(Gtk.Application):
         storage.save_state(STATE_PATH, self.state)
         return False  # one-shot
 
+    def _selected_path(self) -> list[int] | None:
+        """Compute the path (list of indices) of the currently selected node."""
+        pos = self.selection.get_selected()
+        if pos == Gtk.INVALID_LIST_POSITION:
+            return None
+        row = self.tree_model.get_row(pos)
+        # Walk up via TreeListRow.get_parent() to build path of child indices
+        path = []
+        current = row
+        while current is not None:
+            parent = current.get_parent()
+            if parent is None:
+                # current is at root - find its index in root items
+                node = current.get_item().node
+                items = self.state["items"]
+                path.insert(0, items.index(node))
+                break
+            else:
+                parent_node = parent.get_item().node
+                node = current.get_item().node
+                path.insert(0, parent_node["children"].index(node))
+                current = parent
+        return path
+
+    def _refresh(self):
+        """Rebuild the tree model after a structural change."""
+        root_store = Gio.ListStore.new(self.NodeObject)
+        for n in self.state["items"]:
+            root_store.append(self.NodeObject(n))
+
+        def create_child_model(item):
+            node = item.node
+            if not node["children"]:
+                return None
+            child_store = Gio.ListStore.new(self.NodeObject)
+            for c in node["children"]:
+                child_store.append(self.NodeObject(c))
+            return child_store
+
+        self.tree_model = Gtk.TreeListModel.new(
+            root_store, passthrough=False, autoexpand=False,
+            create_func=create_child_model,
+        )
+        self.selection.set_model(self.tree_model)
+
+    def _focus_path(self, path: list[int] | None):
+        """Move selection to the node at `path` after a mutation."""
+        if path is None:
+            return
+        target_node = self.state["items"][path[0]]
+        for idx in path[1:]:
+            target_node = target_node["children"][idx]
+        n = self.tree_model.get_n_items()
+        for i in range(n):
+            row = self.tree_model.get_row(i)
+            if row.get_item().node is target_node:
+                self.selection.set_selected(i)
+                return
+
     def do_activate(self):
         win = Gtk.ApplicationWindow(application=self)
         win.set_decorated(False)
@@ -155,6 +214,47 @@ class TodoApp(Gtk.Application):
 
         self.list_view = list_view
         self.selection = selection
+
+        key_ctrl = Gtk.EventControllerKey()
+        def on_key(_ctrl, keyval, _keycode, mod):
+            import tree
+            path = self._selected_path()
+            shift = bool(mod & Gdk.ModifierType.SHIFT_MASK)
+
+            if keyval == Gdk.KEY_Return and path is not None:
+                new_path = tree.add_sibling_after(self.state["items"], path)
+                self._refresh()
+                self._focus_path(new_path)
+                self.schedule_save()
+                return True
+            if keyval == Gdk.KEY_Tab and path is not None:
+                new_path = tree.indent(self.state["items"], path)
+                self._refresh()
+                self._focus_path(new_path or path)
+                self.schedule_save()
+                return True
+            if keyval == Gdk.KEY_ISO_Left_Tab and path is not None:
+                # Shift+Tab on X11
+                new_path = tree.outdent(self.state["items"], path)
+                self._refresh()
+                self._focus_path(new_path or path)
+                self.schedule_save()
+                return True
+            if keyval == Gdk.KEY_space and path is not None:
+                tree.toggle_done(self.state["items"], path)
+                self._refresh()
+                self._focus_path(path)
+                self.schedule_save()
+                return True
+            if keyval == Gdk.KEY_Delete and path is not None:
+                new_path = tree.delete(self.state["items"], path)
+                self._refresh()
+                self._focus_path(new_path)
+                self.schedule_save()
+                return True
+            return False
+        key_ctrl.connect("key-pressed", on_key)
+        win.add_controller(key_ctrl)
 
         win.set_child(root)
 
