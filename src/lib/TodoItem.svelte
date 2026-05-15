@@ -4,6 +4,7 @@
   import { state, editingPath, focusedPath, dragState } from "./stores";
   import { scheduleSave } from "./storage";
   import { get } from "svelte/store";
+  import { tick } from "svelte";
   import { startDrag, updateHover, endDrag } from "./drag";
 
   export let node: Node;
@@ -16,6 +17,17 @@
   $: pathKey = path.join(".");
   $: editing = ($editingPath?.join(".") ?? "") === pathKey;
   $: focused = ($focusedPath?.join(".") ?? "") === pathKey;
+
+  // When editing becomes true (from anywhere — local dblclick OR external
+  // set via keyboard.ts on Enter), seed draftText and focus the input
+  // once the DOM has rendered.
+  $: if (editing) {
+    draftText = node.text;
+    tick().then(() => {
+      inputEl?.focus();
+      inputEl?.select();
+    });
+  }
 
   function onCheckChange() {
     state.update((s) => {
@@ -34,9 +46,7 @@
   }
 
   function startEdit() {
-    draftText = node.text;
-    editingPath.set(path);
-    setTimeout(() => inputEl?.focus(), 0);
+    editingPath.set(path);  // reactive block above handles seeding + focusing
   }
 
   function commitEdit() {

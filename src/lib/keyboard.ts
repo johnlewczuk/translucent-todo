@@ -57,7 +57,7 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
-    // Enter on empty state creates the first row
+    // Enter on empty state creates the first row and enters edit mode
     if (path === null) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -65,9 +65,10 @@ export function installKeyboardHandler(): () => void {
           if (s.items.length === 0) {
             s.items.push(newNode(""));
             focusedPath.set([0]);
+            editingPath.set([0]);
           } else {
-            // Items exist but nothing focused — focus the first
             focusedPath.set([0]);
+            editingPath.set([0]);
           }
           scheduleSave(s);
           return s;
@@ -81,6 +82,7 @@ export function installKeyboardHandler(): () => void {
       state.update((s) => {
         const np = addSiblingAfter(s.items, path);
         focusedPath.set(np);
+        editingPath.set(np);
         scheduleSave(s);
         return s;
       });
