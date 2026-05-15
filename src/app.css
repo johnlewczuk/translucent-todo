@@ -48,7 +48,11 @@ html, body {
   pointer-events: none;
   z-index: 0;
   opacity: 1;
-  transition: opacity 220ms ease;
+  transition: opacity 220ms ease, background 220ms ease;
+}
+
+.root:hover::before {
+  background: rgba(14, 16, 24, 0.58);
 }
 
 .root.idle:not(:hover)::before {
