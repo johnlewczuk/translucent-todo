@@ -62,3 +62,12 @@ export function indent(items: Node[], path: number[]): number[] | null {
   newParent.children.push(node);
   return [...path.slice(0, -1), idx - 1, newParent.children.length - 1];
 }
+
+export function outdent(items: Node[], path: number[]): number[] | null {
+  if (path.length < 2) return null;
+  const [parent, idx] = findParentAndIndex(items, path);
+  const [grandparent, parentIdx] = findParentAndIndex(items, path.slice(0, -1));
+  const [node] = parent.splice(idx, 1);
+  grandparent.splice(parentIdx + 1, 0, node);
+  return [...path.slice(0, -2), parentIdx + 1];
+}

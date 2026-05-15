@@ -6,6 +6,7 @@ import {
   findParentAndIndex,
   addSiblingAfter,
   indent,
+  outdent,
   type Node,
 } from "./tree";
 
@@ -108,5 +109,37 @@ describe("indent", () => {
     items[0].collapsed = true;
     indent(items, [1]);
     expect(items[0].collapsed).toBe(false);
+  });
+});
+
+describe("outdent", () => {
+  it("one level", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    const path = outdent(items, [0, 0]);
+    expect(path).toEqual([1]);
+    expect(items[0].children).toEqual([]);
+    expect(items[1].text).toBe("a.0");
+  });
+
+  it("at root returns null", () => {
+    const items = [newNode("a")];
+    expect(outdent(items, [0])).toBeNull();
+    expect(items.length).toBe(1);
+  });
+
+  it("preserves subtree", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    items[0].children[0].children.push(newNode("a.0.0"));
+    outdent(items, [0, 0]);
+    expect(items[1].children[0].text).toBe("a.0.0");
+  });
+
+  it("inserts after parent, not at end", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[0].children.push(newNode("a.0"));
+    outdent(items, [0, 0]);
+    expect(items.map(n => n.text)).toEqual(["a", "a.0", "b"]);
   });
 });
