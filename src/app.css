@@ -61,29 +61,6 @@ html, body {
   z-index: 1;
 }
 
-/* Slim, almost-invisible drag strip with a faint dot indicator */
-.header {
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  -webkit-app-region: drag;
-  cursor: grab;
-  flex-shrink: 0;
-}
-.header:active { cursor: grabbing; }
-.header::before {
-  content: "";
-  width: 20px;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--fg-trace);
-  transition: background 160ms ease;
-}
-.header:hover::before {
-  background: var(--fg-muted);
-}
-
 .list {
   flex: 1;
   overflow-y: auto;

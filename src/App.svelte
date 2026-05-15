@@ -17,7 +17,7 @@
   let listInnerEl: HTMLElement;
 
   const WIDTH = 320;
-  const HEADER_H = 14;
+  const HEADER_H = 0;
   const LIST_PAD = 16;        // .list top+bottom padding (4 + 12)
   const MIN_ROWS_H = 0;       // let content drive the height
   const MAX_H = 480;
@@ -139,7 +139,6 @@
     bind:this={rootEl}
   >
     <div class="badge" aria-hidden="true"></div>
-    <div class="header"></div>
     <div class="list" bind:this={listEl}>
       <div class="list-inner" bind:this={listInnerEl}>
         {#each flatten($state.items) as row (row.node.id)}
