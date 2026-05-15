@@ -4,6 +4,7 @@
   import { loadState } from "./lib/storage";
   import type { Node } from "./lib/tree";
   import TodoItem from "./lib/TodoItem.svelte";
+  import { installKeyboardHandler } from "./lib/keyboard";
 
   type FlatRow = { node: Node; depth: number; path: number[] };
 
@@ -28,6 +29,8 @@
       console.error("load_state failed:", e);
       showToast("Could not load saved state");
     }
+    const cleanup = installKeyboardHandler();
+    return () => cleanup();
   });
 </script>
 
