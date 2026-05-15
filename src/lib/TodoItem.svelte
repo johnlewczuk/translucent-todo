@@ -146,10 +146,12 @@
     />
   {:else}
     <span
+      on:click|stopPropagation={() => { if (!node.text) startEdit(); }}
       on:dblclick|stopPropagation={startEdit}
       class="text"
+      class:placeholder={!node.text}
     >
-      {node.text}
+      {node.text || "—"}
     </span>
   {/if}
 
@@ -248,6 +250,10 @@
   .row.done .text {
     color: var(--fg-muted);
     opacity: 0.55;
+  }
+  .text.placeholder {
+    color: var(--fg-faint);
+    cursor: text;
   }
 
   /* Expander: hidden until row has children AND row is hovered */
