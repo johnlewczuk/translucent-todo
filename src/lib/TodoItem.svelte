@@ -188,7 +188,9 @@
   }
   .row:hover { background-color: var(--row-hover); }
 
-  /* Focus indicator: cyan tick on the left edge */
+  /* Focus indicator: cyan tick on the left edge.
+     Uses --accent-row so the parent .root can override it to transparent
+     while idle (see app.css). */
   .row.focused::before {
     content: "";
     position: absolute;
@@ -197,7 +199,8 @@
     bottom: 6px;
     width: 2px;
     border-radius: 1px;
-    background: var(--accent);
+    background: var(--accent-row, var(--accent));
+    transition: background 220ms ease;
   }
 
   /* Indent guides */

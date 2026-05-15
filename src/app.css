@@ -59,6 +59,13 @@ html, body {
   opacity: 0;
 }
 
+/* Also dim the focused-row indicator while idle; cascades into TodoItem
+   via CSS variable (Svelte's scoped selectors can't reach .root.idle
+   directly, but custom properties inherit just fine). */
+.root.idle:not(:hover) {
+  --accent-row: transparent;
+}
+
 /* Content layers must paint above the glass pseudo */
 .root > * {
   position: relative;
