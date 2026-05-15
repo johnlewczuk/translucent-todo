@@ -52,9 +52,13 @@ export function installKeyboardHandler(): () => void {
 
     // Tab and Shift+Tab work in BOTH edit and non-edit mode. If editing,
     // commit the input value first, then indent/outdent.
-    if (e.key === "Tab" || e.key === "ISO_Left_Tab") {
+    const isTab = e.key === "Tab" || e.code === "Tab" || e.key === "ISO_Left_Tab";
+    if (isTab) {
       e.preventDefault();
-      const isShift = e.shiftKey || e.key === "ISO_Left_Tab";
+      const isShift =
+        e.shiftKey ||
+        e.getModifierState?.("Shift") ||
+        e.key === "ISO_Left_Tab";
 
       const editPath = get(editingPath);
       if (editPath && inInput) {
@@ -185,6 +189,8 @@ export function installKeyboardHandler(): () => void {
     }
   }
 
-  window.addEventListener("keydown", handler);
-  return () => window.removeEventListener("keydown", handler);
+  // Capture phase: see the event before any inner element can stop or
+  // hijack it (some browsers/WMs do focus-navigation on Shift+Tab).
+  window.addEventListener("keydown", handler, true);
+  return () => window.removeEventListener("keydown", handler, true);
 }
