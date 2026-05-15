@@ -1,5 +1,36 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-*.egg-info/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# legacy Python venv
 .venv/
+legacy-gtk/.venv/
+legacy-gtk/__pycache__/
+legacy-gtk/.pytest_cache/
+__pycache__/
+.pytest_cache/
