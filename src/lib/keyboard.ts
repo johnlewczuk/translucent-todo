@@ -140,7 +140,8 @@ export function installKeyboardHandler(): () => void {
         scheduleSave(s);
         return s;
       });
-    } else if (e.key === "Tab" && e.shiftKey) {
+    } else if ((e.key === "Tab" && e.shiftKey) || e.key === "ISO_Left_Tab") {
+      // Some Linux/X11 input methods emit "ISO_Left_Tab" for Shift+Tab.
       e.preventDefault();
       state.update((s) => {
         const np = outdent(s.items, path);
