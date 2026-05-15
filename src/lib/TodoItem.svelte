@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Node } from "./tree";
-  import { toggleDone, toggleCollapsed, setText, indent, outdent } from "./tree";
+  import { toggleDone, toggleCollapsed, setText } from "./tree";
   import { state, editingPath, focusedPath, dragState } from "./stores";
   import { scheduleSave } from "./storage";
   import { get } from "svelte/store";
@@ -64,30 +64,14 @@
   }
 
   function onKeydown(e: KeyboardEvent) {
+    // Tab and Shift+Tab are handled by the global keyboard handler,
+    // which also commits the in-progress edit using this input's value.
     if (e.key === "Enter") {
       e.preventDefault();
       commitEdit();
     } else if (e.key === "Escape") {
       e.preventDefault();
       cancelEdit();
-    } else if (e.key === "Tab" && !e.shiftKey) {
-      // Commit text, then indent — without releasing keyboard focus to
-      // the browser's default tab-shift behavior.
-      e.preventDefault();
-      commitEdit();
-      state.update((s) => {
-        const np = indent(s.items, path);
-        if (np !== null) focusedPath.set(np);
-        return s;
-      });
-    } else if ((e.key === "Tab" && e.shiftKey) || e.key === "ISO_Left_Tab") {
-      e.preventDefault();
-      commitEdit();
-      state.update((s) => {
-        const np = outdent(s.items, path);
-        if (np !== null) focusedPath.set(np);
-        return s;
-      });
     }
   }
 

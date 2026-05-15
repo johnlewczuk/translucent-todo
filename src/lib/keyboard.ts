@@ -7,6 +7,7 @@ import {
   outdent,
   deleteNode,
   toggleDone,
+  setText,
   newNode,
   type Node,
 } from "./tree";
@@ -46,12 +47,40 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
-    if (get(editingPath) !== null) return;
-
     const target = e.target as HTMLElement | null;
-    if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+    const inInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
+
+    // Tab and Shift+Tab work in BOTH edit and non-edit mode. If editing,
+    // commit the input value first, then indent/outdent.
+    if (e.key === "Tab" || e.key === "ISO_Left_Tab") {
+      e.preventDefault();
+      const isShift = e.shiftKey || e.key === "ISO_Left_Tab";
+
+      const editPath = get(editingPath);
+      if (editPath && inInput) {
+        const v = (target as HTMLInputElement).value;
+        state.update((s) => {
+          setText(s.items, editPath, v);
+          return s;
+        });
+        editingPath.set(null);
+      }
+
+      const fp = get(focusedPath);
+      if (fp) {
+        state.update((s) => {
+          const np = isShift ? outdent(s.items, fp) : indent(s.items, fp);
+          if (np !== null) focusedPath.set(np);
+          scheduleSave(s);
+          return s;
+        });
+      }
       return;
     }
+
+    // For other keys, defer to the input itself while editing.
+    if (get(editingPath) !== null) return;
+    if (inInput) return;
 
     if ((e.key === "h" || e.key === "H" || e.key === "?") && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
@@ -129,23 +158,6 @@ export function installKeyboardHandler(): () => void {
         const np = addSiblingAfter(s.items, path);
         focusedPath.set(np);
         editingPath.set(np);
-        scheduleSave(s);
-        return s;
-      });
-    } else if (e.key === "Tab" && !e.shiftKey) {
-      e.preventDefault();
-      state.update((s) => {
-        const np = indent(s.items, path);
-        if (np !== null) focusedPath.set(np);
-        scheduleSave(s);
-        return s;
-      });
-    } else if ((e.key === "Tab" && e.shiftKey) || e.key === "ISO_Left_Tab") {
-      // Some Linux/X11 input methods emit "ISO_Left_Tab" for Shift+Tab.
-      e.preventDefault();
-      state.update((s) => {
-        const np = outdent(s.items, path);
-        if (np !== null) focusedPath.set(np);
         scheduleSave(s);
         return s;
       });
