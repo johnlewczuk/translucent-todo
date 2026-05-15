@@ -156,7 +156,7 @@ class TodoApp(Gtk.Application):
             expander = Gtk.TreeExpander()
             box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
             check = Gtk.CheckButton()
-            label = Gtk.Label(xalign=0)
+            label = Gtk.EditableLabel()
             label.set_hexpand(True)
             box.append(check)
             box.append(label)
@@ -181,7 +181,7 @@ class TodoApp(Gtk.Application):
             box = expander.get_child()
             check = box.get_first_child()
             label = check.get_next_sibling()
-            label.set_text(node["text"] or "(empty)")
+            label.set_text(node["text"])
             check.set_active(node["done"])
             # Disconnect any previous handler before connecting a new one
             if hasattr(check, "_handler_id") and check._handler_id:
@@ -199,6 +199,13 @@ class TodoApp(Gtk.Application):
             else:
                 label.remove_css_class("done")
 
+            if hasattr(label, "_text_handler") and label._text_handler:
+                label.disconnect(label._text_handler)
+            def on_text_changed(lbl, _pspec, n=node):
+                n["text"] = lbl.get_text()
+                self.schedule_save()
+            label._text_handler = label.connect("notify::editing", on_text_changed)
+
         factory = Gtk.SignalListItemFactory()
         factory.connect("setup", setup_row)
         factory.connect("bind", bind_row)
@@ -210,7 +217,23 @@ class TodoApp(Gtk.Application):
         scroller = Gtk.ScrolledWindow()
         scroller.set_child(list_view)
         scroller.set_vexpand(True)
+        add_button = Gtk.Button(label="+ Add item")
+        add_button.add_css_class("add-button")
+        def on_add_clicked(_b):
+            import tree
+            if self.state["items"]:
+                new_path = tree.add_sibling_after(
+                    self.state["items"], [len(self.state["items"]) - 1]
+                )
+            else:
+                self.state["items"].append(tree.new_node(""))
+                new_path = [0]
+            self._refresh()
+            self._focus_path(new_path)
+            self.schedule_save()
+        add_button.connect("clicked", on_add_clicked)
         root.append(scroller)
+        root.append(add_button)
 
         self.list_view = list_view
         self.selection = selection
