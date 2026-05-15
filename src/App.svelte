@@ -3,6 +3,7 @@
   import { state, mode, showToast } from "./lib/stores";
   import { loadState } from "./lib/storage";
   import type { Node } from "./lib/tree";
+  import TodoItem from "./lib/TodoItem.svelte";
 
   type FlatRow = { node: Node; depth: number; path: number[] };
 
@@ -34,10 +35,7 @@
   <div class="header" data-tauri-drag-region></div>
   <div class="list">
     {#each flatten($state.items) as row (row.node.id)}
-      <div class="row" style="padding-left: {row.depth * 16 + 8}px;">
-        <input type="checkbox" checked={row.node.done} />
-        <span class:done={row.node.done}>{row.node.text || "(empty)"}</span>
-      </div>
+      <TodoItem node={row.node} depth={row.depth} path={row.path} />
     {/each}
     {#if $state.items.length === 0}
       <div class="empty">No items yet</div>
