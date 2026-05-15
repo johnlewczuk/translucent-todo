@@ -18,6 +18,17 @@ class TodoApp(Gtk.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self.state = storage.load_state(STATE_PATH)
+        self._save_source = 0
+
+    def schedule_save(self):
+        if self._save_source:
+            GLib.source_remove(self._save_source)
+        self._save_source = GLib.timeout_add(250, self._do_save)
+
+    def _do_save(self):
+        self._save_source = 0
+        storage.save_state(STATE_PATH, self.state)
+        return False  # one-shot
 
     def do_activate(self):
         win = Gtk.ApplicationWindow(application=self)
@@ -27,6 +38,17 @@ class TodoApp(Gtk.Application):
 
         w = self.state["window"]
         win.set_default_size(w["w"], w["h"])
+
+        def on_close_request(w):
+            width, height = w.get_default_size()
+            self.state["window"] = {
+                "x": self.state["window"].get("x", 100),
+                "y": self.state["window"].get("y", 100),
+                "w": width, "h": height,
+            }
+            storage.save_state(STATE_PATH, self.state)
+            return False
+        win.connect("close-request", on_close_request)
 
         # Header strip (draggable area)
         header = Gtk.WindowHandle()
@@ -88,11 +110,31 @@ class TodoApp(Gtk.Application):
             node = node_obj.node
             expander = list_item.get_child()
             expander.set_list_row(row)
+            # Sync persisted collapsed state into the row's expansion
+            row.set_expanded(not node["collapsed"])
+            # Track changes back to the node
+            if hasattr(row, "_notify_handler") and row._notify_handler:
+                row.disconnect(row._notify_handler)
+            def on_expanded_changed(r, _pspec, n=node):
+                n["collapsed"] = not r.get_expanded()
+                self.schedule_save()
+            row._notify_handler = row.connect("notify::expanded", on_expanded_changed)
             box = expander.get_child()
             check = box.get_first_child()
             label = check.get_next_sibling()
-            check.set_active(node["done"])
             label.set_text(node["text"] or "(empty)")
+            check.set_active(node["done"])
+            # Disconnect any previous handler before connecting a new one
+            if hasattr(check, "_handler_id") and check._handler_id:
+                check.disconnect(check._handler_id)
+            def on_toggled(_btn, n=node):
+                n["done"] = not n["done"]
+                if n["done"]:
+                    label.add_css_class("done")
+                else:
+                    label.remove_css_class("done")
+                self.schedule_save()
+            check._handler_id = check.connect("toggled", on_toggled)
             if node["done"]:
                 label.add_css_class("done")
             else:
