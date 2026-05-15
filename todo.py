@@ -37,9 +37,82 @@ class TodoApp(Gtk.Application):
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         root.append(header)
 
-        placeholder = Gtk.Label(label="(empty)")
-        placeholder.set_vexpand(True)
-        root.append(placeholder)
+        # Build tree model from state["items"]
+        from gi.repository import GObject
+
+        class NodeObject(GObject.Object):
+            __gtype_name__ = "NodeObject"
+
+            def __init__(self, node):
+                super().__init__()
+                self.node = node  # the dict
+
+        self.NodeObject = NodeObject
+
+        def build_store(items):
+            store = Gio.ListStore.new(NodeObject)
+            for n in items:
+                store.append(NodeObject(n))
+            return store
+
+        def create_child_model(item):
+            node = item.node
+            if not node["children"]:
+                return None
+            return build_store(node["children"])
+
+        root_store = build_store(self.state["items"])
+        self.tree_model = Gtk.TreeListModel.new(
+            root_store,
+            passthrough=False,
+            autoexpand=False,
+            create_func=create_child_model,
+        )
+
+        selection = Gtk.SingleSelection.new(self.tree_model)
+
+        def setup_row(_factory, list_item):
+            expander = Gtk.TreeExpander()
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+            check = Gtk.CheckButton()
+            label = Gtk.Label(xalign=0)
+            label.set_hexpand(True)
+            box.append(check)
+            box.append(label)
+            expander.set_child(box)
+            list_item.set_child(expander)
+
+        def bind_row(_factory, list_item):
+            row = list_item.get_item()  # Gtk.TreeListRow
+            node_obj = row.get_item()
+            node = node_obj.node
+            expander = list_item.get_child()
+            expander.set_list_row(row)
+            box = expander.get_child()
+            check = box.get_first_child()
+            label = check.get_next_sibling()
+            check.set_active(node["done"])
+            label.set_text(node["text"] or "(empty)")
+            if node["done"]:
+                label.add_css_class("done")
+            else:
+                label.remove_css_class("done")
+
+        factory = Gtk.SignalListItemFactory()
+        factory.connect("setup", setup_row)
+        factory.connect("bind", bind_row)
+
+        list_view = Gtk.ListView.new(selection, factory)
+        list_view.set_vexpand(True)
+        list_view.add_css_class("todo-list")
+
+        scroller = Gtk.ScrolledWindow()
+        scroller.set_child(list_view)
+        scroller.set_vexpand(True)
+        root.append(scroller)
+
+        self.list_view = list_view
+        self.selection = selection
 
         win.set_child(root)
 
