@@ -26,7 +26,6 @@
   const HELP_MIN_H = 300;     // enough to show the full shortcut panel
 
   async function syncWindowSize() {
-    if (!rootEl) return;
     // Wait for Svelte + layout to settle before measuring.
     await tick();
     await new Promise((r) => requestAnimationFrame(() => r(null)));
@@ -36,9 +35,10 @@
       await win.setSize(new LogicalSize(PILL_W, PILL_H));
       return;
     }
-    // Measure the inner wrapper (intrinsic height), NOT listEl
-    // (which is flex:1 and always fills available space).
-    const contentH = listInnerEl?.offsetHeight ?? 0;
+    // Expanded-mode measurements need the live .root and .list-inner —
+    // these only exist when the expanded branch is rendered.
+    if (!rootEl || !listInnerEl) return;
+    const contentH = listInnerEl.offsetHeight ?? 0;
     let desired = Math.max(
       HEADER_H + LIST_PAD + MIN_ROWS_H,
       Math.min(MAX_H, HEADER_H + LIST_PAD + contentH),
