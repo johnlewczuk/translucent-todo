@@ -1,0 +1,35 @@
+/* style.css */
+window.todo-root {
+  background-color: rgba(20, 20, 28, 0.65);
+  color: #e8e8ef;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+.todo-header {
+  min-height: 22px;
+  background-color: rgba(40, 40, 55, 0.35);
+}
+
+row.todo-row {
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+row.todo-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+label.done {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+button.add-button {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e8e8ef;
+  border: none;
+  padding: 6px;
+  margin: 6px;
+  border-radius: 4px;
+}
