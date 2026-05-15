@@ -119,8 +119,13 @@
 {#if $mode === "pill"}
   <Pill />
 {:else}
-  <div class="root" class:idle={!$windowFocused} bind:this={rootEl}>
-    <div class="header" data-tauri-drag-region></div>
+  <div
+    class="root"
+    class:idle={!$windowFocused}
+    bind:this={rootEl}
+    data-tauri-drag-region
+  >
+    <div class="header"></div>
     <div class="list" bind:this={listEl}>
       <div class="list-inner" bind:this={listInnerEl}>
         {#each flatten($state.items) as row (row.node.id)}

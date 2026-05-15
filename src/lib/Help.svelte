@@ -23,6 +23,7 @@
 
 <div
   class="overlay"
+  data-tauri-drag-region="false"
   on:click={close}
   role="dialog"
   aria-modal="true"

@@ -99,6 +99,7 @@
 
   <div
     class="grip"
+    data-tauri-drag-region="false"
     on:pointerdown|stopPropagation={(e) => {
       e.preventDefault();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -133,6 +134,7 @@
   <button
     class="check"
     class:checked={node.done}
+    data-tauri-drag-region="false"
     on:click|stopPropagation={onCheckChange}
     aria-label={node.done ? "Mark as not done" : "Mark as done"}
   ></button>
@@ -142,12 +144,14 @@
       type="text"
       bind:value={draftText}
       bind:this={inputEl}
+      data-tauri-drag-region="false"
       on:blur={commitEdit}
       on:keydown={onKeydown}
       class="edit"
     />
   {:else}
     <span
+      data-tauri-drag-region="false"
       on:click|stopPropagation={() => { if (!node.text) startEdit(); }}
       on:dblclick|stopPropagation={startEdit}
       class="text"
@@ -160,6 +164,7 @@
   <button
     class="expander"
     class:visible={node.children.length > 0}
+    data-tauri-drag-region="false"
     on:click|stopPropagation={onExpanderClick}
     aria-label={node.collapsed ? "expand" : "collapse"}
   >
