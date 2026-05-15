@@ -12,11 +12,20 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "translucent-todo",
-        "width": 800,
-        "height": 600,
+        "width": 320,
+        "height": 420,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
         "resizable": true,
-        "fullscreen": false
+        "minWidth": 120,
+        "minHeight": 36,
+        "shadow": false,
+        "focus": true,
+        "visible": true
       }
     ],
     "security": {
