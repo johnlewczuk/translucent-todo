@@ -52,12 +52,6 @@
     return out;
   }
 
-  // Re-sync window size whenever items change (add, remove, expand, edit).
-  // ResizeObserver alone misses these because .list is flex:1 — its layout
-  // box doesn't change when scrollHeight does.
-  $: void $state.items, syncWindowSize();
-  $: void $mode, syncWindowSize();
-
   onMount(async () => {
     try {
       const loaded = await loadState();
@@ -71,6 +65,12 @@
     await tick();
     syncWindowSize();
 
+    // Re-sync on every state and mode change. Subscriptions fire reliably
+    // even when state.update() returns the same object reference (which
+    // breaks naive $: reactivity in Svelte 5 runes mode).
+    const stateUnsub = state.subscribe(() => { syncWindowSize(); });
+    const modeUnsub = mode.subscribe(() => { syncWindowSize(); });
+
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
       const s = get(state);
@@ -82,6 +82,8 @@
 
     return () => {
       cleanup();
+      stateUnsub();
+      modeUnsub();
       unlistenFocus();
     };
   });
