@@ -111,11 +111,6 @@
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
       windowFocused.set(focused);
-      const s = get(state);
-      if (!focused && s.mini_mode_enabled && get(mode) === "expanded") {
-        mode.set("pill");
-        state.update((s2) => { s2.window.mode = "pill"; scheduleSave(s2); return s2; });
-      }
     });
 
     return () => {

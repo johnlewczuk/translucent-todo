@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import { tick } from "svelte";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { state, focusedPath, editingPath, mode, helpOpen } from "./stores";
 import { scheduleSave } from "./storage";
 import {
@@ -145,12 +146,8 @@ export function installKeyboardHandler(): () => void {
 
     if (e.key === "m" && e.ctrlKey) {
       e.preventDefault();
-      mode.update((m) => (m === "expanded" ? "pill" : "expanded"));
-      state.update((s) => {
-        s.window.mode = get(mode);
-        scheduleSave(s);
-        return s;
-      });
+      // Hide to the system tray. Click the tray icon to bring it back.
+      getCurrentWindow().hide();
       return;
     }
 

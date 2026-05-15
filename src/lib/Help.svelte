@@ -9,7 +9,7 @@
     ["Delete", "Remove row"],
     ["↑ / ↓", "Move focus"],
     ["Dbl-click", "Edit text"],
-    ["⌃ M", "Pill mode"],
+    ["⌃ M", "Hide to tray"],
     ["⌃ + / -", "Font size"],
     ["⌃ 0", "Reset font"],
     ["H", "This help"],
