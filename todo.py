@@ -217,7 +217,9 @@ class TodoApp(Gtk.Application):
         scroller = Gtk.ScrolledWindow()
         scroller.set_child(list_view)
         scroller.set_vexpand(True)
-        add_button = Gtk.Button(label="+ Add item")
+        add_button = Gtk.Button.new_from_icon_name("list-add-symbolic")
+        add_button.set_tooltip_text("Add item")
+        add_button.set_halign(Gtk.Align.START)
         add_button.add_css_class("add-button")
         def on_add_clicked(_b):
             import tree
