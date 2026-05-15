@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
+  import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
   import { state, mode, showToast, focusedPath } from "./lib/stores";
   import { loadState, scheduleSave } from "./lib/storage";
   import { addSiblingAfter, newNode } from "./lib/tree";
@@ -7,6 +9,28 @@
   import TodoItem from "./lib/TodoItem.svelte";
   import Toast from "./lib/Toast.svelte";
   import { installKeyboardHandler } from "./lib/keyboard";
+
+  let rootEl: HTMLElement;
+  let listEl: HTMLElement;
+
+  const MIN_H = 200;
+  const MAX_H = 600;
+  const PILL_W = 120;
+  const PILL_H = 36;
+
+  async function syncWindowSize() {
+    if (!rootEl) return;
+    const win = getCurrentWindow();
+    const currentMode = get(mode);
+    if (currentMode === "pill") {
+      await win.setSize(new LogicalSize(PILL_W, PILL_H));
+      return;
+    }
+    const headerH = 24;
+    const naturalListH = listEl?.scrollHeight ?? 0;
+    const desired = Math.max(MIN_H, Math.min(MAX_H, headerH + naturalListH + 16));
+    await win.setSize(new LogicalSize(320, desired));
+  }
 
   type FlatRow = { node: Node; depth: number; path: number[] };
 
@@ -46,13 +70,24 @@
       showToast("Could not load saved state");
     }
     const cleanup = installKeyboardHandler();
-    return () => cleanup();
+
+    const ro = new ResizeObserver(() => { syncWindowSize(); });
+    if (listEl) ro.observe(listEl);
+    syncWindowSize();
+
+    const modeUnsub = mode.subscribe(() => syncWindowSize());
+
+    return () => {
+      cleanup();
+      ro.disconnect();
+      modeUnsub();
+    };
   });
 </script>
 
-<div class="root">
+<div class="root" bind:this={rootEl}>
   <div class="header" data-tauri-drag-region></div>
-  <div class="list">
+  <div class="list" bind:this={listEl}>
     {#each flatten($state.items) as row (row.node.id)}
       <TodoItem node={row.node} depth={row.depth} path={row.path} />
     {/each}
