@@ -242,10 +242,14 @@
     flex: 1;
     padding: 0;
     color: var(--fg);
+    line-height: 1.2;
     transition: color 140ms ease, opacity 140ms ease;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .edit {
+    line-height: 1.2;
   }
   .row.done .text {
     color: var(--fg-muted);
