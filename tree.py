@@ -62,3 +62,37 @@ def outdent(items: list[dict], path: list[int]) -> list[int] | None:
     node = parent.pop(idx)
     grandparent.insert(parent_idx + 1, node)
     return path[:-2] + [parent_idx + 1]
+
+
+def delete(items: list[dict], path: list[int]) -> list[int] | None:
+    """Remove node at `path` and its subtree. Returns path to focus next, or None if list now empty."""
+    parent, idx = find_parent_and_index(items, path)
+    parent.pop(idx)
+    if not items:
+        return None
+    if idx > 0:
+        return path[:-1] + [idx - 1]
+    if parent:  # there's still a sibling at the same index
+        return path
+    if len(path) >= 2:  # was the only child — focus the parent
+        return path[:-1]
+    return None
+
+
+def _get_node(items: list[dict], path: list[int]) -> dict:
+    parent, idx = find_parent_and_index(items, path)
+    return parent[idx]
+
+
+def toggle_done(items: list[dict], path: list[int]) -> None:
+    node = _get_node(items, path)
+    node["done"] = not node["done"]
+
+
+def toggle_collapsed(items: list[dict], path: list[int]) -> None:
+    node = _get_node(items, path)
+    node["collapsed"] = not node["collapsed"]
+
+
+def set_text(items: list[dict], path: list[int], text: str) -> None:
+    _get_node(items, path)["text"] = text

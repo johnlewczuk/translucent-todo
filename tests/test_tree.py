@@ -129,3 +129,54 @@ def test_outdent_inserts_after_parent_not_at_end():
     items[0]["children"].append(new_node("a.0"))
     outdent(items, [0, 0])
     assert [n["text"] for n in items] == ["a", "a.0", "b"]
+
+
+from tree import delete, toggle_done, toggle_collapsed, set_text
+
+
+def test_delete_removes_node_and_subtree():
+    items = [new_node("a"), new_node("b")]
+    items[0]["children"].append(new_node("a.0"))
+    delete(items, [0])
+    assert len(items) == 1
+    assert items[0]["text"] == "b"
+
+
+def test_delete_returns_focus_path_to_previous_sibling():
+    items = [new_node("a"), new_node("b")]
+    new_path = delete(items, [1])
+    assert new_path == [0]
+
+
+def test_delete_first_child_returns_parent_path():
+    items = [new_node("a")]
+    items[0]["children"].append(new_node("a.0"))
+    new_path = delete(items, [0, 0])
+    assert new_path == [0]
+
+
+def test_delete_only_root_returns_none():
+    items = [new_node("a")]
+    new_path = delete(items, [0])
+    assert new_path is None
+    assert items == []
+
+
+def test_toggle_done():
+    items = [new_node("a")]
+    toggle_done(items, [0])
+    assert items[0]["done"] is True
+    toggle_done(items, [0])
+    assert items[0]["done"] is False
+
+
+def test_toggle_collapsed():
+    items = [new_node("a")]
+    toggle_collapsed(items, [0])
+    assert items[0]["collapsed"] is True
+
+
+def test_set_text():
+    items = [new_node("a")]
+    set_text(items, [0], "renamed")
+    assert items[0]["text"] == "renamed"
