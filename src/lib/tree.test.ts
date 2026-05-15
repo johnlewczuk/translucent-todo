@@ -5,6 +5,7 @@ import {
   deserialize,
   findParentAndIndex,
   addSiblingAfter,
+  indent,
   type Node,
 } from "./tree";
 
@@ -73,5 +74,39 @@ describe("addSiblingAfter", () => {
     expect(items[0].children.length).toBe(2);
     expect(items[0].children[1].text).toBe("a.1");
     expect(path).toEqual([0, 1]);
+  });
+});
+
+describe("indent", () => {
+  it("with previous sibling", () => {
+    const items = [newNode("a"), newNode("b")];
+    const path = indent(items, [1]);
+    expect(path).toEqual([0, 0]);
+    expect(items.length).toBe(1);
+    expect(items[0].children[0].text).toBe("b");
+  });
+
+  it("no previous sibling returns null", () => {
+    const items = [newNode("a")];
+    expect(indent(items, [0])).toBeNull();
+    expect(items.length).toBe(1);
+  });
+
+  it("preserves subtree and collapsed state", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[1].collapsed = true;
+    items[1].children.push(newNode("b.0"));
+    indent(items, [1]);
+    const moved = items[0].children[0];
+    expect(moved.text).toBe("b");
+    expect(moved.collapsed).toBe(true);
+    expect(moved.children[0].text).toBe("b.0");
+  });
+
+  it("auto-expands new parent", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[0].collapsed = true;
+    indent(items, [1]);
+    expect(items[0].collapsed).toBe(false);
   });
 });

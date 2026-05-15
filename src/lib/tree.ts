@@ -52,3 +52,13 @@ export function addSiblingAfter(
   parent.splice(idx + 1, 0, newNode(text));
   return [...path.slice(0, -1), idx + 1];
 }
+
+export function indent(items: Node[], path: number[]): number[] | null {
+  const [parent, idx] = findParentAndIndex(items, path);
+  if (idx === 0) return null;
+  const [node] = parent.splice(idx, 1);
+  const newParent = parent[idx - 1];
+  newParent.collapsed = false;
+  newParent.children.push(node);
+  return [...path.slice(0, -1), idx - 1, newParent.children.length - 1];
+}
