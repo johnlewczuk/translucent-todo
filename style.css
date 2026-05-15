@@ -1,35 +1,188 @@
-/* style.css */
+/* translucent-todo — visual style
+ * Designed for X11 with an RGBA compositor. Reads as "soft frosted dark."
+ */
+
+/* ---------- window shell ---------- */
+
 window.todo-root {
-  background-color: rgba(20, 20, 28, 0.65);
-  color: #e8e8ef;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  background: linear-gradient(
+    160deg,
+    rgba(22, 24, 34, 0.78),
+    rgba(14, 16, 24, 0.82)
+  );
+  color: #e8eaf2;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-family: "Inter", "SF Pro Text", "Segoe UI", "Cantarell", sans-serif;
   font-size: 13px;
+  font-feature-settings: "ss01", "cv02";
 }
+
+window.todo-root > box {
+  border-radius: 14px;
+}
+
+/* ---------- header (drag strip) ---------- */
 
 .todo-header {
-  min-height: 22px;
-  background-color: rgba(40, 40, 55, 0.35);
+  min-height: 24px;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
-row.todo-row {
-  padding: 4px 6px;
+/* ---------- list / rows ---------- */
+
+scrolledwindow {
+  background: transparent;
+}
+
+listview {
+  background: transparent;
+  padding: 6px 4px;
+}
+
+listview > row {
+  background: transparent;
+  border-radius: 6px;
+  margin: 1px 4px;
+  padding: 3px 4px;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+listview > row:hover {
+  background-color: rgba(255, 255, 255, 0.045);
+}
+
+listview > row:selected {
+  background-color: rgba(120, 160, 230, 0.18);
+  color: #f4f6fb;
+}
+
+listview > row:selected:hover {
+  background-color: rgba(120, 160, 230, 0.24);
+}
+
+/* Tree indent / expander */
+treeexpander {
+  padding-left: 2px;
+}
+
+treeexpander > expander {
+  min-width: 16px;
+  min-height: 16px;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 120ms ease;
+}
+
+treeexpander > expander:hover {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- checkbox ---------- */
+
+checkbutton {
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0;
+  margin-right: 2px;
+}
+
+checkbutton > check {
+  min-width: 14px;
+  min-height: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  box-shadow: none;
+  transition: all 140ms ease;
+  -gtk-icon-source: none;
+}
+
+checkbutton > check:hover {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+checkbutton > check:checked {
+  background: linear-gradient(135deg, #9ec1ff, #6f93d6);
+  border-color: rgba(158, 193, 255, 0.55);
+  box-shadow: 0 0 0 3px rgba(158, 193, 255, 0.08);
+  -gtk-icon-source: -gtk-icontheme("object-select-symbolic");
+  color: #0d1018;
+}
+
+/* ---------- labels ---------- */
+
+editablelabel {
+  background: transparent;
+  padding: 2px 4px;
+  color: #e8eaf2;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+editablelabel > stack > label {
+  color: inherit;
+}
+
+editablelabel > stack > entry {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(120, 160, 230, 0.3);
   border-radius: 4px;
-}
-
-row.todo-row:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1px 3px;
+  color: #f4f6fb;
+  caret-color: #9ec1ff;
 }
 
 label.done {
   text-decoration: line-through;
-  opacity: 0.55;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  opacity: 0.45;
+  font-style: italic;
 }
 
+/* ---------- add button ---------- */
+
 button.add-button {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e8e8ef;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 234, 242, 0.85);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  padding: 6px 10px;
+  margin: 6px 10px 10px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 140ms ease;
+  box-shadow: none;
+}
+
+button.add-button:hover {
+  background: rgba(158, 193, 255, 0.10);
+  border-color: rgba(158, 193, 255, 0.30);
+  color: #f4f6fb;
+}
+
+button.add-button:active {
+  background: rgba(158, 193, 255, 0.16);
+}
+
+/* ---------- scrollbar (slim) ---------- */
+
+scrollbar {
+  background: transparent;
   border: none;
-  padding: 6px;
-  margin: 6px;
-  border-radius: 4px;
+}
+
+scrollbar slider {
+  min-width: 5px;
+  min-height: 20px;
+  background-color: rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 160ms ease;
+}
+
+scrollbar slider:hover {
+  background-color: rgba(255, 255, 255, 0.32);
 }
