@@ -95,6 +95,19 @@
       syncWindowSize();
     });
 
+    // Drag from anywhere: any left-button mousedown that isn't on an
+    // interactive element starts a window drag.
+    const NO_DRAG = "button, input, textarea, a, .grip, .text, .empty, .help-overlay, .help-panel";
+    function onMouseDown(e: MouseEvent) {
+      if (e.button !== 0) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest(NO_DRAG)) return;
+      e.preventDefault();
+      getCurrentWindow().startDragging();
+    }
+    window.addEventListener("mousedown", onMouseDown);
+
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
       windowFocused.set(focused);
@@ -112,6 +125,7 @@
       helpUnsub();
       stateUnsub();
       unlistenFocus();
+      window.removeEventListener("mousedown", onMouseDown);
     };
   });
 </script>
@@ -123,7 +137,6 @@
     class="root"
     class:idle={!$windowFocused}
     bind:this={rootEl}
-    data-tauri-drag-region
   >
     <div class="header"></div>
     <div class="list" bind:this={listEl}>
