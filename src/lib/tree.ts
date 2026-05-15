@@ -30,3 +30,25 @@ export function deserialize(s: string): Node[] {
   if (!s) return [];
   return JSON.parse(s) as Node[];
 }
+
+export function findParentAndIndex(
+  items: Node[],
+  path: number[],
+): [Node[], number] {
+  if (path.length === 0) throw new Error("path must be non-empty");
+  let current: Node[] = items;
+  for (let i = 0; i < path.length - 1; i++) {
+    current = current[path[i]].children;
+  }
+  return [current, path[path.length - 1]];
+}
+
+export function addSiblingAfter(
+  items: Node[],
+  path: number[],
+  text: string = "",
+): number[] {
+  const [parent, idx] = findParentAndIndex(items, path);
+  parent.splice(idx + 1, 0, newNode(text));
+  return [...path.slice(0, -1), idx + 1];
+}

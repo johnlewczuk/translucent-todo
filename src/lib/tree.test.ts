@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { newNode, serialize, deserialize, type Node } from "./tree";
+import {
+  newNode,
+  serialize,
+  deserialize,
+  findParentAndIndex,
+  addSiblingAfter,
+  type Node,
+} from "./tree";
 
 describe("newNode", () => {
   it("has required fields", () => {
@@ -29,5 +36,42 @@ describe("serialize/deserialize", () => {
 
   it("deserialize('') returns []", () => {
     expect(deserialize("")).toEqual([]);
+  });
+});
+
+describe("findParentAndIndex", () => {
+  it("finds at root level", () => {
+    const items = [newNode("a"), newNode("b")];
+    const [parent, idx] = findParentAndIndex(items, [1]);
+    expect(parent).toBe(items);
+    expect(idx).toBe(1);
+  });
+
+  it("finds nested", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    items[0].children.push(newNode("a.1"));
+    const [parent, idx] = findParentAndIndex(items, [0, 1]);
+    expect(parent).toBe(items[0].children);
+    expect(idx).toBe(1);
+  });
+});
+
+describe("addSiblingAfter", () => {
+  it("at root", () => {
+    const items = [newNode("a")];
+    const path = addSiblingAfter(items, [0], "b");
+    expect(items.length).toBe(2);
+    expect(items[1].text).toBe("b");
+    expect(path).toEqual([1]);
+  });
+
+  it("nested", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    const path = addSiblingAfter(items, [0, 0], "a.1");
+    expect(items[0].children.length).toBe(2);
+    expect(items[0].children[1].text).toBe("a.1");
+    expect(path).toEqual([0, 1]);
   });
 });
