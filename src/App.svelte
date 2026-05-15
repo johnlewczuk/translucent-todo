@@ -1,89 +1,55 @@
-<script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from './assets/vite.svg'
-  import heroImg from './assets/hero.png'
-  import Counter from './lib/Counter.svelte'
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { state, mode, showToast } from "./lib/stores";
+  import { loadState } from "./lib/storage";
+  import type { Node } from "./lib/tree";
+
+  type FlatRow = { node: Node; depth: number; path: number[] };
+
+  function flatten(items: Node[], depth: number = 0, prefix: number[] = []): FlatRow[] {
+    const out: FlatRow[] = [];
+    items.forEach((node, i) => {
+      const path = [...prefix, i];
+      out.push({ node, depth, path });
+      if (!node.collapsed && node.children.length > 0) {
+        out.push(...flatten(node.children, depth + 1, path));
+      }
+    });
+    return out;
+  }
+
+  onMount(async () => {
+    try {
+      const loaded = await loadState();
+      state.set(loaded);
+      mode.set(loaded.window.mode);
+    } catch (e) {
+      console.error("load_state failed:", e);
+      showToast("Could not load saved state");
+    }
+  });
 </script>
 
-<section id="center">
-  <div class="hero">
-    <img src={heroImg} class="base" width="170" height="179" alt="" />
-    <img src={svelteLogo} class="framework" alt="Svelte logo" />
-    <img src={viteLogo} class="vite" alt="Vite logo" />
+<div class="root">
+  <div class="header" data-tauri-drag-region></div>
+  <div class="list">
+    {#each flatten($state.items) as row (row.node.id)}
+      <div class="row" style="padding-left: {row.depth * 16 + 8}px;">
+        <input type="checkbox" checked={row.node.done} />
+        <span class:done={row.node.done}>{row.node.text || "(empty)"}</span>
+      </div>
+    {/each}
+    {#if $state.items.length === 0}
+      <div class="empty">No items yet</div>
+    {/if}
   </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/App.svelte</code> and save to test <code>HMR</code></p>
-  </div>
-  <Counter />
-</section>
+</div>
 
-<div class="ticks"></div>
-
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#documentation-icon"></use>
-    </svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank" rel="noreferrer">
-          <img class="logo" src={viteLogo} alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://svelte.dev/" target="_blank" rel="noreferrer">
-          <img class="button-icon" src={svelteLogo} alt="" />
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true">
-      <use href="/icons.svg#social-icon"></use>
-    </svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li>
-        <a href="https://github.com/vitejs/vite" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#github-icon"></use>
-          </svg>
-          GitHub
-        </a>
-      </li>
-      <li>
-        <a href="https://chat.vite.dev/" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#discord-icon"></use>
-          </svg>
-          Discord
-        </a>
-      </li>
-      <li>
-        <a href="https://x.com/vite_js" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#x-icon"></use>
-          </svg>
-          X.com
-        </a>
-      </li>
-      <li>
-        <a href="https://bsky.app/profile/vite.dev" target="_blank" rel="noreferrer">
-          <svg class="button-icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#bluesky-icon"></use>
-          </svg>
-          Bluesky
-        </a>
-      </li>
-    </ul>
-  </div>
-</section>
-
-<div class="ticks"></div>
-<section id="spacer"></section>
+<style>
+  .empty {
+    padding: 16px;
+    text-align: center;
+    opacity: 0.5;
+    font-size: 12px;
+  }
+</style>
