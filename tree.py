@@ -21,3 +21,19 @@ def deserialize(s: str) -> list[dict]:
     if not s:
         return []
     return json.loads(s)
+
+
+def find_parent_and_index(items: list[dict], path: list[int]) -> tuple[list[dict], int]:
+    """Return the list containing the node at `path` and the node's index in that list."""
+    assert path, "path must be non-empty"
+    current = items
+    for i in path[:-1]:
+        current = current[i]["children"]
+    return current, path[-1]
+
+
+def add_sibling_after(items: list[dict], path: list[int], text: str = "") -> list[int]:
+    """Insert a new empty node immediately after the node at `path`. Returns new node's path."""
+    parent, idx = find_parent_and_index(items, path)
+    parent.insert(idx + 1, new_node(text))
+    return path[:-1] + [idx + 1]
