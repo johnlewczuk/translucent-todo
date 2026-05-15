@@ -7,6 +7,10 @@ import {
   addSiblingAfter,
   indent,
   outdent,
+  deleteNode,
+  toggleDone,
+  toggleCollapsed,
+  setText,
   type Node,
 } from "./tree";
 
@@ -141,5 +145,58 @@ describe("outdent", () => {
     items[0].children.push(newNode("a.0"));
     outdent(items, [0, 0]);
     expect(items.map(n => n.text)).toEqual(["a", "a.0", "b"]);
+  });
+});
+
+describe("deleteNode", () => {
+  it("removes node and subtree", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[0].children.push(newNode("a.0"));
+    deleteNode(items, [0]);
+    expect(items.length).toBe(1);
+    expect(items[0].text).toBe("b");
+  });
+
+  it("returns path to previous sibling", () => {
+    const items = [newNode("a"), newNode("b")];
+    expect(deleteNode(items, [1])).toEqual([0]);
+  });
+
+  it("returns parent path when deleting first child", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    expect(deleteNode(items, [0, 0])).toEqual([0]);
+  });
+
+  it("returns null when last root item deleted", () => {
+    const items = [newNode("a")];
+    expect(deleteNode(items, [0])).toBeNull();
+    expect(items).toEqual([]);
+  });
+});
+
+describe("toggleDone", () => {
+  it("flips done", () => {
+    const items = [newNode("a")];
+    toggleDone(items, [0]);
+    expect(items[0].done).toBe(true);
+    toggleDone(items, [0]);
+    expect(items[0].done).toBe(false);
+  });
+});
+
+describe("toggleCollapsed", () => {
+  it("flips collapsed", () => {
+    const items = [newNode("a")];
+    toggleCollapsed(items, [0]);
+    expect(items[0].collapsed).toBe(true);
+  });
+});
+
+describe("setText", () => {
+  it("renames node", () => {
+    const items = [newNode("a")];
+    setText(items, [0], "renamed");
+    expect(items[0].text).toBe("renamed");
   });
 });

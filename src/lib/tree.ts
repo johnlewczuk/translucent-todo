@@ -71,3 +71,32 @@ export function outdent(items: Node[], path: number[]): number[] | null {
   grandparent.splice(parentIdx + 1, 0, node);
   return [...path.slice(0, -2), parentIdx + 1];
 }
+
+function getNode(items: Node[], path: number[]): Node {
+  const [parent, idx] = findParentAndIndex(items, path);
+  return parent[idx];
+}
+
+export function deleteNode(items: Node[], path: number[]): number[] | null {
+  const [parent, idx] = findParentAndIndex(items, path);
+  parent.splice(idx, 1);
+  if (items.length === 0) return null;
+  if (idx > 0) return [...path.slice(0, -1), idx - 1];
+  if (parent.length > 0) return path;
+  if (path.length >= 2) return path.slice(0, -1);
+  return null;
+}
+
+export function toggleDone(items: Node[], path: number[]): void {
+  const n = getNode(items, path);
+  n.done = !n.done;
+}
+
+export function toggleCollapsed(items: Node[], path: number[]): void {
+  const n = getNode(items, path);
+  n.collapsed = !n.collapsed;
+}
+
+export function setText(items: Node[], path: number[], text: string): void {
+  getNode(items, path).text = text;
+}
