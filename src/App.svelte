@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
   import { state, mode, showToast, focusedPath } from "./lib/stores";
@@ -72,11 +72,22 @@
     }
     const cleanup = installKeyboardHandler();
 
-    const ro = new ResizeObserver(() => { syncWindowSize(); });
-    if (listEl) ro.observe(listEl);
+    let ro: ResizeObserver | null = null;
+    function reattachObserver() {
+      if (ro) ro.disconnect();
+      ro = new ResizeObserver(() => { syncWindowSize(); });
+      if (listEl) ro.observe(listEl);
+    }
+    reattachObserver();
     syncWindowSize();
 
-    const modeUnsub = mode.subscribe(() => syncWindowSize());
+    // When mode flips, the markup branches: re-attach observer to the
+    // new listEl (or stop observing if we're entering pill mode), then sync.
+    const modeUnsub = mode.subscribe(async () => {
+      await tick();
+      reattachObserver();
+      syncWindowSize();
+    });
 
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
@@ -89,7 +100,7 @@
 
     return () => {
       cleanup();
-      ro.disconnect();
+      ro?.disconnect();
       modeUnsub();
       unlistenFocus();
     };
