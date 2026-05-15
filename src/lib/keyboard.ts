@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { state, focusedPath, editingPath, mode } from "./stores";
+import { state, focusedPath, editingPath, mode, helpOpen } from "./stores";
 import { scheduleSave } from "./storage";
 import {
   addSiblingAfter,
@@ -37,10 +37,25 @@ function moveFocus(delta: -1 | 1): void {
 
 export function installKeyboardHandler(): () => void {
   function handler(e: KeyboardEvent) {
+    // Esc closes the help overlay even if nothing else is focused
+    if (get(helpOpen)) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        helpOpen.set(false);
+      }
+      return;
+    }
+
     if (get(editingPath) !== null) return;
 
     const target = e.target as HTMLElement | null;
     if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+      return;
+    }
+
+    if ((e.key === "h" || e.key === "H" || e.key === "?") && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      helpOpen.set(true);
       return;
     }
 

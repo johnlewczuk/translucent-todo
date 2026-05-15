@@ -8,6 +8,8 @@
   import TodoItem from "./lib/TodoItem.svelte";
   import Toast from "./lib/Toast.svelte";
   import Pill from "./lib/Pill.svelte";
+  import Help from "./lib/Help.svelte";
+  import { helpOpen } from "./lib/stores";
   import { installKeyboardHandler } from "./lib/keyboard";
 
   let rootEl: HTMLElement;
@@ -109,5 +111,8 @@
       </div>
     </div>
     <Toast />
+    {#if $helpOpen}
+      <Help />
+    {/if}
   </div>
 {/if}
