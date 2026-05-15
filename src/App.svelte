@@ -8,6 +8,7 @@
   import type { Node } from "./lib/tree";
   import TodoItem from "./lib/TodoItem.svelte";
   import Toast from "./lib/Toast.svelte";
+  import Pill from "./lib/Pill.svelte";
   import { installKeyboardHandler } from "./lib/keyboard";
 
   let rootEl: HTMLElement;
@@ -77,27 +78,41 @@
 
     const modeUnsub = mode.subscribe(() => syncWindowSize());
 
+    const win = getCurrentWindow();
+    const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
+      const s = get(state);
+      if (!focused && s.mini_mode_enabled && get(mode) === "expanded") {
+        mode.set("pill");
+        state.update((s2) => { s2.window.mode = "pill"; scheduleSave(s2); return s2; });
+      }
+    });
+
     return () => {
       cleanup();
       ro.disconnect();
       modeUnsub();
+      unlistenFocus();
     };
   });
 </script>
 
-<div class="root" bind:this={rootEl}>
-  <div class="header" data-tauri-drag-region></div>
-  <div class="list" bind:this={listEl}>
-    {#each flatten($state.items) as row (row.node.id)}
-      <TodoItem node={row.node} depth={row.depth} path={row.path} />
-    {/each}
-    {#if $state.items.length === 0}
-      <div class="empty">No items yet</div>
-    {/if}
+{#if $mode === "pill"}
+  <Pill />
+{:else}
+  <div class="root" bind:this={rootEl}>
+    <div class="header" data-tauri-drag-region></div>
+    <div class="list" bind:this={listEl}>
+      {#each flatten($state.items) as row (row.node.id)}
+        <TodoItem node={row.node} depth={row.depth} path={row.path} />
+      {/each}
+      {#if $state.items.length === 0}
+        <div class="empty">No items yet</div>
+      {/if}
+    </div>
+    <button class="add-btn" on:click={onAddClick} aria-label="Add item">+</button>
+    <Toast />
   </div>
-  <button class="add-btn" on:click={onAddClick} aria-label="Add item">+</button>
-  <Toast />
-</div>
+{/if}
 
 <style>
   .root { position: relative; }
