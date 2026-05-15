@@ -50,3 +50,15 @@ def indent(items: list[dict], path: list[int]) -> list[int] | None:
     new_parent["collapsed"] = False  # auto-expand so the move is visible
     new_parent["children"].append(node)
     return path[:-1] + [idx - 1, len(new_parent["children"]) - 1]
+
+
+def outdent(items: list[dict], path: list[int]) -> list[int] | None:
+    """Move node at `path` to become the next sibling of its parent.
+    Returns new path, or None if already at root."""
+    if len(path) < 2:
+        return None
+    parent, idx = find_parent_and_index(items, path)
+    grandparent, parent_idx = find_parent_and_index(items, path[:-1])
+    node = parent.pop(idx)
+    grandparent.insert(parent_idx + 1, node)
+    return path[:-2] + [parent_idx + 1]

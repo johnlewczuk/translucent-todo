@@ -96,3 +96,36 @@ def test_indent_auto_expands_new_parent():
     items[0]["collapsed"] = True
     indent(items, [1])
     assert items[0]["collapsed"] is False
+
+
+from tree import outdent
+
+
+def test_outdent_one_level():
+    items = [new_node("a")]
+    items[0]["children"].append(new_node("a.0"))
+    new_path = outdent(items, [0, 0])
+    assert new_path == [1]
+    assert items[0]["children"] == []
+    assert items[1]["text"] == "a.0"
+
+
+def test_outdent_at_root_returns_none():
+    items = [new_node("a")]
+    assert outdent(items, [0]) is None
+    assert len(items) == 1
+
+
+def test_outdent_preserves_subtree():
+    items = [new_node("a")]
+    items[0]["children"].append(new_node("a.0"))
+    items[0]["children"][0]["children"].append(new_node("a.0.0"))
+    outdent(items, [0, 0])
+    assert items[1]["children"][0]["text"] == "a.0.0"
+
+
+def test_outdent_inserts_after_parent_not_at_end():
+    items = [new_node("a"), new_node("b")]
+    items[0]["children"].append(new_node("a.0"))
+    outdent(items, [0, 0])
+    assert [n["text"] for n in items] == ["a", "a.0", "b"]
