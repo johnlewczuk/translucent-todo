@@ -1,9 +1,10 @@
 <script lang="ts">
   import type { Node } from "./tree";
   import { toggleDone, toggleCollapsed, setText } from "./tree";
-  import { state, editingPath, focusedPath } from "./stores";
+  import { state, editingPath, focusedPath, dragState } from "./stores";
   import { scheduleSave } from "./storage";
   import { get } from "svelte/store";
+  import { startDrag, updateHover, endDrag } from "./drag";
 
   export let node: Node;
   export let depth: number;
@@ -70,11 +71,48 @@
 <div
   class="row"
   class:focused
+  class:drop-before={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "before"}
+  class:drop-after={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "after"}
+  class:drop-child={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "child"}
+  class:dragging={$dragState?.fromPath?.join(",") === path.join(",")}
+  data-path={path.join(",")}
   style="padding-left: {depth * 16 + 4}px;"
   on:click={onRowClick}
   role="treeitem"
   tabindex="0"
 >
+  <div
+    class="grip"
+    on:pointerdown|stopPropagation={(e) => {
+      e.preventDefault();
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      startDrag(path);
+    }}
+    on:pointermove={(e) => {
+      if (get(dragState) === null) return;
+      const elBelow = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const rowEl = elBelow?.closest(".row") as HTMLElement | null;
+      if (!rowEl) return;
+      const rect = rowEl.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const third = rect.height / 3;
+      const position: "before" | "after" | "child" =
+        y < third ? "before" : y > 2 * third ? "after" : "child";
+      const hoverPathAttr = rowEl.dataset.path;
+      if (!hoverPathAttr) return;
+      const hoverPath = hoverPathAttr.split(",").map(Number);
+      let nodes = get(state).items as Node[];
+      let n: Node | null = null;
+      for (const idx of hoverPath) { n = nodes[idx]; nodes = n.children; }
+      if (n) updateHover(hoverPath, position, n);
+    }}
+    on:pointerup={() => endDrag(true)}
+    on:pointercancel={() => endDrag(false)}
+    on:keydown={(e) => { if (e.key === "Escape") endDrag(false); }}
+    aria-label="Drag handle"
+    role="button"
+    tabindex="0"
+  >⋮⋮</div>
   <button
     class="expander"
     class:invisible={node.children.length === 0}
@@ -172,6 +210,29 @@
     padding: 2px 4px;
   }
   .done { text-decoration: line-through; opacity: 0.45; font-style: italic; }
+
+  .grip {
+    width: 12px;
+    text-align: center;
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.30);
+    font-size: 10px;
+    user-select: none;
+    letter-spacing: -3px;
+  }
+  .grip:active { cursor: grabbing; }
+
+  .row.dragging { opacity: 0.4; }
+
+  .row.drop-before {
+    box-shadow: inset 0 2px 0 0 #9ec1ff;
+  }
+  .row.drop-after {
+    box-shadow: inset 0 -2px 0 0 #9ec1ff;
+  }
+  .row.drop-child {
+    box-shadow: inset 0 0 0 2px rgba(158, 193, 255, 0.5);
+  }
 
   .edit {
     flex: 1;
