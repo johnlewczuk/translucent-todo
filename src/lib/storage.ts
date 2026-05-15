@@ -10,6 +10,7 @@ export type AppState = {
     mode: "expanded" | "pill";
   };
   mini_mode_enabled: boolean;
+  font_size?: number;
   items: Node[];
 };
 

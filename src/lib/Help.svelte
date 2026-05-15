@@ -10,6 +10,8 @@
     ["↑ / ↓", "Move focus"],
     ["Dbl-click", "Edit text"],
     ["⌃ M", "Pill mode"],
+    ["⌃ + / -", "Font size"],
+    ["⌃ 0", "Reset font"],
     ["H", "This help"],
     ["Esc", "Cancel"],
   ];

@@ -27,7 +27,9 @@
 
   async function syncWindowSize() {
     if (!rootEl) return;
-    await tick();  // ensure DOM reflects latest state
+    // Wait for Svelte + layout to settle before measuring.
+    await tick();
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
     const win = getCurrentWindow();
     const currentMode = get(mode);
     if (currentMode === "pill") {
@@ -83,6 +85,16 @@
     const modeUnsub = mode.subscribe(() => { syncWindowSize(); });
     const helpUnsub = helpOpen.subscribe(() => { syncWindowSize(); });
 
+    // Safety-net: any state change (item count, collapsed, font_size, etc.)
+    // re-syncs window size. ResizeObserver should cover content-height
+    // changes, but this catches edge cases where the observer doesn't fire
+    // synchronously with the mutation.
+    const stateUnsub = state.subscribe((s) => {
+      const fs = s.font_size ?? 14;
+      document.documentElement.style.setProperty("--fs", `${fs}px`);
+      syncWindowSize();
+    });
+
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
       const s = get(state);
@@ -97,6 +109,7 @@
       ro.disconnect();
       modeUnsub();
       helpUnsub();
+      stateUnsub();
       unlistenFocus();
     };
   });

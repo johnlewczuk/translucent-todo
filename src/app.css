@@ -16,7 +16,7 @@ html, body {
   background: transparent;
   color: var(--fg);
   font-family: "Inter", "SF Pro Text", "Segoe UI", "Cantarell", sans-serif;
-  font-size: 13px;
+  font-size: var(--fs, 14px);
   font-weight: 400;
   letter-spacing: -0.005em;
   line-height: 1.45;

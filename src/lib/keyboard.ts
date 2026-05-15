@@ -59,6 +59,37 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
+    // Font size: Ctrl+= (or Ctrl++) / Ctrl+- / Ctrl+0 to reset
+    if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
+      e.preventDefault();
+      state.update((s) => {
+        const cur = s.font_size ?? 13;
+        s.font_size = Math.min(22, cur + 1);
+        scheduleSave(s);
+        return s;
+      });
+      return;
+    }
+    if (e.ctrlKey && e.key === "-") {
+      e.preventDefault();
+      state.update((s) => {
+        const cur = s.font_size ?? 13;
+        s.font_size = Math.max(10, cur - 1);
+        scheduleSave(s);
+        return s;
+      });
+      return;
+    }
+    if (e.ctrlKey && e.key === "0") {
+      e.preventDefault();
+      state.update((s) => {
+        s.font_size = 13;
+        scheduleSave(s);
+        return s;
+      });
+      return;
+    }
+
     const path = get(focusedPath);
 
     if (e.key === "m" && e.ctrlKey) {
