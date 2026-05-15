@@ -3,7 +3,7 @@
   import { get } from "svelte/store";
   import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
   import { state, mode, showToast } from "./lib/stores";
-  import { loadState } from "./lib/storage";
+  import { loadState, scheduleSave } from "./lib/storage";
   import type { Node } from "./lib/tree";
   import TodoItem from "./lib/TodoItem.svelte";
   import Toast from "./lib/Toast.svelte";
@@ -13,23 +13,29 @@
   let rootEl: HTMLElement;
   let listEl: HTMLElement;
 
-  const MIN_H = 200;
-  const MAX_H = 600;
+  const WIDTH = 320;
+  const HEADER_H = 14;
+  const LIST_PAD = 16;        // .list top+bottom padding (4 + 12)
+  const MIN_ROWS_H = 42;      // ~ one row + tiny breathing room
+  const MAX_H = 480;
   const PILL_W = 120;
   const PILL_H = 36;
 
   async function syncWindowSize() {
     if (!rootEl) return;
+    await tick();  // ensure DOM reflects latest state
     const win = getCurrentWindow();
     const currentMode = get(mode);
     if (currentMode === "pill") {
       await win.setSize(new LogicalSize(PILL_W, PILL_H));
       return;
     }
-    const headerH = 24;
-    const naturalListH = listEl?.scrollHeight ?? 0;
-    const desired = Math.max(MIN_H, Math.min(MAX_H, headerH + naturalListH + 16));
-    await win.setSize(new LogicalSize(320, desired));
+    const contentH = listEl?.scrollHeight ?? 0;
+    const desired = Math.max(
+      HEADER_H + LIST_PAD + MIN_ROWS_H,
+      Math.min(MAX_H, HEADER_H + contentH),
+    );
+    await win.setSize(new LogicalSize(WIDTH, desired));
   }
 
   type FlatRow = { node: Node; depth: number; path: number[] };
@@ -46,6 +52,12 @@
     return out;
   }
 
+  // Re-sync window size whenever items change (add, remove, expand, edit).
+  // ResizeObserver alone misses these because .list is flex:1 — its layout
+  // box doesn't change when scrollHeight does.
+  $: void $state.items, syncWindowSize();
+  $: void $mode, syncWindowSize();
+
   onMount(async () => {
     try {
       const loaded = await loadState();
@@ -56,23 +68,8 @@
       showToast("Could not load saved state");
     }
     const cleanup = installKeyboardHandler();
-
-    let ro: ResizeObserver | null = null;
-    function reattachObserver() {
-      if (ro) ro.disconnect();
-      ro = new ResizeObserver(() => { syncWindowSize(); });
-      if (listEl) ro.observe(listEl);
-    }
-    reattachObserver();
+    await tick();
     syncWindowSize();
-
-    // When mode flips, the markup branches: re-attach observer to the
-    // new listEl (or stop observing if we're entering pill mode), then sync.
-    const modeUnsub = mode.subscribe(async () => {
-      await tick();
-      reattachObserver();
-      syncWindowSize();
-    });
 
     const win = getCurrentWindow();
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
@@ -85,8 +82,6 @@
 
     return () => {
       cleanup();
-      ro?.disconnect();
-      modeUnsub();
       unlistenFocus();
     };
   });
@@ -108,4 +103,3 @@
     <Toast />
   </div>
 {/if}
-
