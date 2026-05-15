@@ -100,3 +100,58 @@ export function toggleCollapsed(items: Node[], path: number[]): void {
 export function setText(items: Node[], path: number[], text: string): void {
   getNode(items, path).text = text;
 }
+
+function isDescendant(items: Node[], ancestorPath: number[], maybeDescendant: number[]): boolean {
+  if (maybeDescendant.length <= ancestorPath.length) return false;
+  for (let i = 0; i < ancestorPath.length; i++) {
+    if (ancestorPath[i] !== maybeDescendant[i]) return false;
+  }
+  return true;
+}
+
+function pathsEqual(a: number[], b: number[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+export function moveNode(
+  items: Node[],
+  fromPath: number[],
+  toPath: number[],
+  position: "before" | "after" | "child",
+): number[] {
+  if (pathsEqual(fromPath, toPath)) return fromPath;
+  if (isDescendant(items, fromPath, toPath)) return fromPath;
+
+  // 1. Detach the source node
+  const [fromParent, fromIdx] = findParentAndIndex(items, fromPath);
+  const [node] = fromParent.splice(fromIdx, 1);
+
+  // 2. Adjust toPath if the removal shifted indices at the level fromPath
+  //    was operating on.
+  const adjustedToPath = [...toPath];
+  for (let i = 0; i < adjustedToPath.length; i++) {
+    const prefix = fromPath.slice(0, i);
+    const sharesPrefix = prefix.every((v, j) => v === adjustedToPath[j]);
+    if (sharesPrefix && i === fromPath.length - 1 && adjustedToPath[i] > fromIdx) {
+      adjustedToPath[i] -= 1;
+    }
+  }
+
+  // 3. Insert
+  if (position === "child") {
+    let cur: Node[] = items;
+    let target: Node | null = null;
+    for (const idx of adjustedToPath) {
+      target = cur[idx];
+      cur = target.children;
+    }
+    target!.collapsed = false;
+    target!.children.push(node);
+    return [...adjustedToPath, target!.children.length - 1];
+  }
+
+  const [toParent, toIdx] = findParentAndIndex(items, adjustedToPath);
+  const insertAt = position === "before" ? toIdx : toIdx + 1;
+  toParent.splice(insertAt, 0, node);
+  return [...adjustedToPath.slice(0, -1), insertAt];
+}

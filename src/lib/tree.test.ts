@@ -200,3 +200,60 @@ describe("setText", () => {
     expect(items[0].text).toBe("renamed");
   });
 });
+
+import { moveNode } from "./tree";
+
+describe("moveNode", () => {
+  it("moves before target at root", () => {
+    const items = [newNode("a"), newNode("b"), newNode("c")];
+    const path = moveNode(items, [2], [0], "before");
+    expect(items.map(n => n.text)).toEqual(["c", "a", "b"]);
+    expect(path).toEqual([0]);
+  });
+
+  it("moves after target at root", () => {
+    const items = [newNode("a"), newNode("b"), newNode("c")];
+    const path = moveNode(items, [0], [2], "after");
+    expect(items.map(n => n.text)).toEqual(["b", "c", "a"]);
+    expect(path).toEqual([2]);
+  });
+
+  it("moves as last child of target", () => {
+    const items = [newNode("a"), newNode("b")];
+    const path = moveNode(items, [1], [0], "child");
+    expect(items.length).toBe(1);
+    expect(items[0].children[0].text).toBe("b");
+    expect(path).toEqual([0, 0]);
+  });
+
+  it("auto-expands target when dropping as child", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[0].collapsed = true;
+    moveNode(items, [1], [0], "child");
+    expect(items[0].collapsed).toBe(false);
+  });
+
+  it("returns original path when target is descendant of source (cycle)", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    items[0].children[0].children.push(newNode("a.0.0"));
+    const path = moveNode(items, [0], [0, 0], "child");
+    expect(path).toEqual([0]);
+    expect(items[0].text).toBe("a");
+  });
+
+  it("returns fromPath when from == to", () => {
+    const items = [newNode("a"), newNode("b")];
+    const path = moveNode(items, [0], [0], "before");
+    expect(path).toEqual([0]);
+    expect(items.map(n => n.text)).toEqual(["a", "b"]);
+  });
+
+  it("preserves subtree when moving", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[1].children.push(newNode("b.0"));
+    moveNode(items, [1], [0], "after");
+    expect(items[1].text).toBe("b");
+    expect(items[1].children[0].text).toBe("b.0");
+  });
+});
