@@ -2,9 +2,25 @@ mod commands;
 mod storage;
 
 use std::sync::Mutex;
+use tauri::image::Image;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{Manager, PhysicalPosition};
+
+const TRAY_ICON_BYTES: &[u8] = include_bytes!("../icons/tray.png");
+
+fn load_tray_icon() -> Option<Image<'static>> {
+  use std::io::Cursor;
+  let decoder = png::Decoder::new(Cursor::new(TRAY_ICON_BYTES));
+  let mut reader = decoder.read_info().ok()?;
+  let mut buf = vec![0u8; reader.output_buffer_size()];
+  let info = reader.next_frame(&mut buf).ok()?;
+  // Expect RGBA; the PIL generator above writes RGBA mode.
+  if info.color_type != png::ColorType::Rgba {
+    return None;
+  }
+  Some(Image::new_owned(buf, info.width, info.height))
+}
 
 /// Holds the window's last known outer position so we can restore it
 /// after a tray hide/show round-trip (X11/Wayland WMs are free to
@@ -44,10 +60,11 @@ pub fn run() {
         )?;
       }
 
-      // System tray
-      let icon = app.default_window_icon().cloned();
-      eprintln!("[tray] default_window_icon present: {}", icon.is_some());
-      if let Some(icon) = icon {
+      // System tray — use our hand-built checklist icon instead of the
+      // generic window icon.
+      let tray_icon = load_tray_icon();
+      eprintln!("[tray] tray icon loaded: {}", tray_icon.is_some());
+      if let Some(icon) = tray_icon {
         let show_item = MenuItem::with_id(app, "show", "Show window", true, None::<&str>)?;
         let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
         let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
@@ -78,7 +95,7 @@ pub fn run() {
           Err(e) => eprintln!("[tray] build FAILED: {:?}", e),
         }
       } else {
-        eprintln!("[tray] no default_window_icon — skipping tray build");
+        eprintln!("[tray] tray icon failed to load — skipping tray build");
       }
 
       Ok(())

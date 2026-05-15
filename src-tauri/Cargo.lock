@@ -80,6 +80,7 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "log",
+ "png 0.17.16",
  "serde",
  "serde_json",
  "tauri",
