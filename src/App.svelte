@@ -138,15 +138,13 @@
     class:idle={!$windowFocused}
     bind:this={rootEl}
   >
+    <div class="badge" aria-hidden="true"></div>
     <div class="header"></div>
     <div class="list" bind:this={listEl}>
       <div class="list-inner" bind:this={listInnerEl}>
         {#each flatten($state.items) as row (row.node.id)}
           <TodoItem node={row.node} depth={row.depth} path={row.path} />
         {/each}
-        {#if $state.items.length === 0}
-          <div class="empty">Press Enter to begin</div>
-        {/if}
       </div>
     </div>
     <Toast />
