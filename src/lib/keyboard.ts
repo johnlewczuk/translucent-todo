@@ -9,6 +9,7 @@ import {
   outdent,
   deleteNode,
   toggleDone,
+  toggleCollapsed,
   setText,
   newNode,
   type Node,
@@ -31,11 +32,66 @@ function moveFocus(delta: -1 | 1): void {
   const paths = flattenPaths(s.items);
   if (paths.length === 0) return;
   const cur = get(focusedPath);
-  const curIdx = cur === null
-    ? -1
-    : paths.findIndex((p) => p.length === cur.length && p.every((v, i) => v === cur[i]));
+  if (cur === null) {
+    focusedPath.set(delta > 0 ? paths[0] : paths[paths.length - 1]);
+    return;
+  }
+  const curIdx = paths.findIndex(
+    (p) => p.length === cur.length && p.every((v, i) => v === cur[i]),
+  );
   const nextIdx = Math.max(0, Math.min(paths.length - 1, curIdx + delta));
   focusedPath.set(paths[nextIdx]);
+}
+
+function getNodeAt(items: Node[], path: number[]): Node | null {
+  let cur: Node[] = items;
+  let n: Node | null = null;
+  for (const idx of path) {
+    if (!cur[idx]) return null;
+    n = cur[idx];
+    cur = n.children;
+  }
+  return n;
+}
+
+/** Right arrow: expand if collapsed, otherwise descend into first child. */
+function moveRight(): void {
+  const path = get(focusedPath);
+  if (path === null) {
+    moveFocus(1);
+    return;
+  }
+  const node = getNodeAt(get(state).items, path);
+  if (!node || node.children.length === 0) return;
+  if (node.collapsed) {
+    state.update((s) => {
+      toggleCollapsed(s.items, path);
+      scheduleSave(s);
+      return s;
+    });
+  } else {
+    focusedPath.set([...path, 0]);
+  }
+}
+
+/** Left arrow: collapse if expanded, otherwise climb to parent. */
+function moveLeft(): void {
+  const path = get(focusedPath);
+  if (path === null) {
+    moveFocus(-1);
+    return;
+  }
+  const node = getNodeAt(get(state).items, path);
+  if (!node) return;
+  if (node.children.length > 0 && !node.collapsed) {
+    state.update((s) => {
+      toggleCollapsed(s.items, path);
+      scheduleSave(s);
+      return s;
+    });
+  } else if (path.length > 1) {
+    focusedPath.set(path.slice(0, -1));
+  }
 }
 
 export function installKeyboardHandler(): () => void {
@@ -142,6 +198,29 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
+    // Arrow navigation works even when nothing is focused — first press
+    // selects an end of the list.
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveFocus(1);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveFocus(-1);
+      return;
+    }
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      moveRight();
+      return;
+    }
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      moveLeft();
+      return;
+    }
+
     const path = get(focusedPath);
 
     if (e.key === "m" && e.ctrlKey) {
@@ -195,12 +274,6 @@ export function installKeyboardHandler(): () => void {
         scheduleSave(s);
         return s;
       });
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      moveFocus(-1);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      moveFocus(1);
     }
   }
 

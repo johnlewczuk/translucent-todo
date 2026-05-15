@@ -8,6 +8,8 @@
     ["Space", "Toggle done"],
     ["Delete", "Remove row"],
     ["↑ / ↓", "Move focus"],
+    ["→", "Expand / enter child"],
+    ["←", "Collapse / parent"],
     ["Dbl-click", "Edit text"],
     ["⌃ M", "Hide to tray"],
     ["⌃ + / -", "Font size"],
