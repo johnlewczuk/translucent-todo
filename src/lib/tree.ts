@@ -3,6 +3,7 @@ export type Node = {
   text: string;
   done: boolean;
   collapsed: boolean;
+  is_header?: boolean;  // when true: no checkbox, header styling, lives at root depth
   children: Node[];
 };
 

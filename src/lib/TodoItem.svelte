@@ -88,6 +88,7 @@
   class="row"
   class:focused
   class:done={node.done}
+  class:header={node.is_header}
   class:drop-before={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "before"}
   class:drop-after={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "after"}
   class:drop-child={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "child"}
@@ -135,13 +136,15 @@
     tabindex="0"
   ></div>
 
-  <button
-    class="check"
-    class:checked={node.done}
-    data-tauri-drag-region="false"
-    on:click|stopPropagation={onCheckChange}
-    aria-label={node.done ? "Mark as not done" : "Mark as done"}
-  ></button>
+  {#if !node.is_header}
+    <button
+      class="check"
+      class:checked={node.done}
+      data-tauri-drag-region="false"
+      on:click|stopPropagation={onCheckChange}
+      aria-label={node.done ? "Mark as not done" : "Mark as done"}
+    ></button>
+  {/if}
 
   {#if editing}
     <input
@@ -268,6 +271,21 @@
   .row.done .text {
     color: var(--fg-muted);
     opacity: 0.55;
+  }
+
+  /* Header styling: no checkbox; bolder, slightly larger text;
+     a sliver of top margin so headers separate visually from the
+     row above. */
+  .row.header {
+    margin-top: 8px;
+    padding-top: 4px;
+  }
+  .row.header:first-child { margin-top: 2px; }
+  .row.header .text {
+    font-weight: 600;
+    font-size: 1.05em;
+    letter-spacing: -0.01em;
+    color: var(--fg);
   }
   .text.placeholder {
     color: var(--fg-faint);

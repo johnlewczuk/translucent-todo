@@ -16,14 +16,21 @@
   let listEl: HTMLElement;
   let listInnerEl: HTMLElement;
 
-  const WIDTH = 320;
+  const MIN_W = 220;
+  const MAX_W = 560;
   const HEADER_H = 0;
   const LIST_PAD = 16;        // .list top+bottom padding (4 + 12)
   const MIN_ROWS_H = 0;       // let content drive the height
   const MAX_H = 480;
   const PILL_W = 120;
   const PILL_H = 36;
-  const HELP_MIN_H = 300;     // enough to show the full shortcut panel
+  const HELP_MIN_W = 280;     // enough for the shortcut panel
+  const HELP_MIN_H = 300;     // enough for the shortcut panel
+
+  // Estimate of non-text row width: indent guides + grip + check + expander + paddings + safety.
+  // Each indent guide adds ~22px (16 width + ~6 margin).
+  const ROW_CHROME_PX = 56;
+  const INDENT_PX = 22;
 
   async function syncWindowSize() {
     // Wait for Svelte + layout to settle before measuring.
@@ -38,16 +45,32 @@
     // Expanded-mode measurements need the live .root and .list-inner —
     // these only exist when the expanded branch is rendered.
     if (!rootEl || !listInnerEl) return;
+
+    // Height: list-inner's intrinsic height + header + list padding.
     const contentH = listInnerEl.offsetHeight ?? 0;
-    let desired = Math.max(
+    let desiredH = Math.max(
       HEADER_H + LIST_PAD + MIN_ROWS_H,
       Math.min(MAX_H, HEADER_H + LIST_PAD + contentH),
     );
-    // Keep at least enough room for the help panel while it's open
-    if (get(helpOpen)) {
-      desired = Math.max(desired, HELP_MIN_H);
-    }
-    await win.setSize(new LogicalSize(WIDTH, desired));
+    if (get(helpOpen)) desiredH = Math.max(desiredH, HELP_MIN_H);
+
+    // Width: find the widest row's natural text width + chrome + indent.
+    // Per-row scrollWidth gives the unclipped text length even though
+    // .text is flex:1 with overflow:hidden.
+    let widest = 0;
+    const rows = listInnerEl.querySelectorAll(".row");
+    rows.forEach((row) => {
+      const r = row as HTMLElement;
+      const text = r.querySelector(".text") as HTMLElement | null;
+      const indents = r.querySelectorAll(".indent").length;
+      const textW = text ? text.scrollWidth : 0;
+      const total = indents * INDENT_PX + ROW_CHROME_PX + textW;
+      if (total > widest) widest = total;
+    });
+    let desiredW = Math.max(MIN_W, Math.min(MAX_W, widest));
+    if (get(helpOpen)) desiredW = Math.max(desiredW, HELP_MIN_W);
+
+    await win.setSize(new LogicalSize(desiredW, desiredH));
   }
 
   type FlatRow = { node: Node; depth: number; path: number[] };

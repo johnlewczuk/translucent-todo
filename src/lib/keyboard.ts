@@ -131,10 +131,31 @@ export function installKeyboardHandler(): () => void {
           if (wasEditing && draftValue !== null && editPath) {
             setText(s.items, editPath, draftValue);
           }
-          const np = isShift ? outdent(s.items, fp) : indent(s.items, fp);
+          const node = getNodeAt(s.items, fp);
+          let np: number[] | null;
+          if (isShift) {
+            // Shift+Tab ladder: nested → outdent; root todo → header;
+            // header → no-op (already maximally outdented)
+            const outdented = outdent(s.items, fp);
+            if (outdented !== null) {
+              np = outdented;
+            } else if (node && !node.is_header && fp.length === 1) {
+              node.is_header = true;
+              np = fp;
+            } else {
+              np = null;
+            }
+          } else {
+            // Tab ladder: header → become root todo; otherwise indent
+            if (node?.is_header) {
+              node.is_header = false;
+              np = fp;
+            } else {
+              np = indent(s.items, fp);
+            }
+          }
           if (np !== null) {
             focusedPath.set(np);
-            // Carry the edit cursor with the moved row so the user keeps typing
             if (wasEditing) editingPath.set(np);
           }
           scheduleSave(s);
