@@ -72,6 +72,7 @@ html, body {
    directly, but custom properties inherit just fine). */
 .root.idle:not(:hover) {
   --accent-row: transparent;
+  --row-focus: transparent;
 }
 
 /* Content layers must paint above the glass pseudo */
