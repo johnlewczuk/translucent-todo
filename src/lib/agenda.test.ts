@@ -69,4 +69,21 @@ describe("buildAgenda", () => {
     expect(a.upcoming.map((e) => e.node.text)).toEqual(["child"]);
     expect(a.upcoming[0].path).toEqual([0, 0]);
   });
+
+  it("includes a dated header in its group, with its path", () => {
+    const a = buildAgenda(
+      [n("milestone", { is_header: true, due: "2026-06-10" })],
+      MON,
+    );
+    expect(a.upcoming.map((e) => e.node.text)).toEqual(["milestone"]);
+    expect(a.upcoming[0].node.is_header).toBe(true);
+    expect(a.upcoming[0].path).toEqual([0]);
+  });
+
+  it("places a done overdue item in the overdue group", () => {
+    // The chip-tint suppression for done items is the view's concern, but the
+    // entry must still classify by its date so it appears under Overdue.
+    const a = buildAgenda([n("late-but-done", { due: "2026-06-07", done: true })], MON);
+    expect(a.overdue.map((e) => e.node.text)).toEqual(["late-but-done"]);
+  });
 });

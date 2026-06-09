@@ -218,7 +218,7 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
-    if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey) {
+    if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey && get(mode) !== "pill") {
       e.preventDefault();
       view.set("agenda");
       return;

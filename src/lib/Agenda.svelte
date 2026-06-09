@@ -55,7 +55,7 @@
 
 <div class="agenda">
   {#if isEmpty}
-    <div class="empty">No due dates</div>
+    <div class="empty">No due dates.</div>
   {:else}
     {#each GROUPS as group (group.key)}
       {#if agenda[group.key].length > 0}
@@ -151,4 +151,8 @@
   .row.done .text { color: var(--fg-muted); opacity: 0.55; text-decoration: line-through; }
   /* Header entries have no checkbox; indent the text to align with todo rows. */
   .row > .text:first-child { margin-left: 23px; }
+
+  /* The agenda chip is display-only (date editing happens in the outline), so
+     override the global .due-chip's pointer cursor. */
+  .due-chip { cursor: default; }
 </style>
