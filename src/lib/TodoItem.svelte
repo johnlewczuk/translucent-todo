@@ -423,29 +423,6 @@
     caret-color: var(--accent);
   }
 
-  /* Due-date chip: compact, muted by default; tints for overdue/today.
-     Sits between the label (flex:1) and the expander, so it rides the
-     right edge of the row. */
-  .due-chip {
-    flex-shrink: 0;
-    margin: 0 8px 0 8px;
-    padding: 1px 6px;
-    border: none;
-    border-radius: 4px;
-    background: var(--row-hover);
-    color: var(--fg-muted);
-    font-family: inherit;
-    font-size: 0.82em;
-    line-height: 1.3;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 120ms ease, background-color 120ms ease;
-  }
-  .due-chip:hover { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
-  .due-chip.today { color: var(--accent); }
-  .due-chip.overdue { color: var(--warn); }
-  .row.done .due-chip { color: var(--fg-faint); }
-
   /* Due-date editor: same minimal-chrome treatment as the text editor, but
      fixed-width and right-aligned where the chip would sit. */
   .due-edit {
