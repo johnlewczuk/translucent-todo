@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import { tick } from "svelte";
 import { invoke } from "@tauri-apps/api/core";
-import { state, focusedPath, editingPath, editingDatePath, mode, helpOpen } from "./stores";
+import { state, focusedPath, editingPath, editingDatePath, mode, helpOpen, view } from "./stores";
 import { scheduleSave } from "./storage";
 import {
   addSiblingAfter,
@@ -118,6 +118,19 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
+    // Agenda mode is keyboard-light: only toggle out (a/Esc) and help (h) act;
+    // every outline shortcut is inert here. Interaction is mouse-driven.
+    if (get(view) === "agenda") {
+      if (e.key === "Escape" || e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        view.set("outline");
+      } else if (e.key === "h" || e.key === "H" || e.key === "?") {
+        e.preventDefault();
+        helpOpen.set(true);
+      }
+      return;
+    }
+
     // While editing a due date, the inline date input owns every key
     // (Enter/Esc/typing handled by its own keydown). Stay out of the way.
     if (get(editingDatePath) !== null) return;
@@ -202,6 +215,12 @@ export function installKeyboardHandler(): () => void {
     if ((e.key === "h" || e.key === "H" || e.key === "?") && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       helpOpen.set(true);
+      return;
+    }
+
+    if ((e.key === "a" || e.key === "A") && !e.ctrlKey && !e.metaKey) {
+      e.preventDefault();
+      view.set("agenda");
       return;
     }
 
