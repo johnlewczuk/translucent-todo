@@ -10,6 +10,9 @@ export const state = writable<AppState>({
 });
 
 export const mode = writable<Mode>("expanded");
+// Which expanded-mode view is showing. Transient (not persisted) — the app
+// always opens in the outline. Ignored in pill mode.
+export const view = writable<"outline" | "agenda">("outline");
 export const helpOpen = writable<boolean>(false);
 export const windowFocused = writable<boolean>(true);
 export const focusedPath = writable<number[] | null>(null);
