@@ -19,6 +19,7 @@
 
   const MIN_W = 220;
   const MAX_W = 560;
+  const AGENDA_MIN_W = 260;   // agenda rows are chip-heavy; dividers have no text
   const HEADER_H = 0;
   const LIST_PAD = 16;        // .list top+bottom padding (4 + 12)
   const MIN_ROWS_H = 0;       // let content drive the height
@@ -100,7 +101,7 @@
     let desiredW = Math.max(MIN_W, Math.min(MAX_W, widest));
     // The width measurer only counts row text; agenda rows are chip-heavy and
     // have group dividers with no text, so floor the width to avoid wrapping.
-    if (get(view) === "agenda") desiredW = Math.max(desiredW, 260);
+    if (get(view) === "agenda") desiredW = Math.max(desiredW, AGENDA_MIN_W);
     if (get(helpOpen)) desiredW = Math.max(desiredW, HELP_MIN_W);
 
     await win.setSize(new LogicalSize(desiredW, desiredH));
