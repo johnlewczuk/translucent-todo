@@ -7,7 +7,9 @@
     ["⇧ Tab", "Outdent"],
     ["Space", "Toggle done"],
     ["Delete", "Remove row"],
+    ["D", "Set / edit due date"],
     ["↑ / ↓", "Move focus"],
+    ["Alt ↑ / ↓", "Move row up / down"],
     ["→", "Expand / enter child"],
     ["←", "Collapse / parent"],
     ["Dbl-click", "Edit text"],
@@ -65,11 +67,19 @@
     border-radius: 10px;
     padding: 14px 16px 12px;
     min-width: 220px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+  .panel::-webkit-scrollbar { width: 6px; }
+  .panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 3px;
   }
 
   .title {
-    font-size: 11px;
+    font-size: 0.8em;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--fg-muted);
@@ -83,7 +93,7 @@
     column-gap: 14px;
     row-gap: 6px;
     align-items: center;
-    font-size: 12px;
+    font-size: 0.9em;
   }
   dt, dd { margin: 0; }
   dt { text-align: right; }
@@ -97,7 +107,7 @@
     border-radius: 4px;
     color: var(--fg);
     font-family: "SF Mono", "JetBrains Mono", "Consolas", monospace;
-    font-size: 10.5px;
+    font-size: 0.78em;
     line-height: 1.3;
     min-width: 1.5em;
     text-align: center;

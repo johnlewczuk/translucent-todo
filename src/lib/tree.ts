@@ -4,6 +4,7 @@ export type Node = {
   done: boolean;
   collapsed: boolean;
   is_header?: boolean;  // when true: no checkbox, header styling, lives at root depth
+  due?: string;         // optional due date as ISO "YYYY-MM-DD"; absent when none
   children: Node[];
 };
 
@@ -100,6 +101,15 @@ export function toggleCollapsed(items: Node[], path: number[]): void {
 
 export function setText(items: Node[], path: number[], text: string): void {
   getNode(items, path).text = text;
+}
+
+export function setDue(items: Node[], path: number[], due: string | null): void {
+  const n = getNode(items, path);
+  if (due === null) {
+    delete n.due;
+  } else {
+    n.due = due;
+  }
 }
 
 function isDescendant(items: Node[], ancestorPath: number[], maybeDescendant: number[]): boolean {

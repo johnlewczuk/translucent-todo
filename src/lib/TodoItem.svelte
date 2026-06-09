@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Node } from "./tree";
-  import { toggleDone, toggleCollapsed, setText } from "./tree";
-  import { state, editingPath, focusedPath, dragState } from "./stores";
+  import { toggleDone, toggleCollapsed, setText, setDue } from "./tree";
+  import { parseDate, dueLabel, dueStatus } from "./dates";
+  import { state, editingPath, editingDatePath, focusedPath, dragState, showToast } from "./stores";
   import { scheduleSave } from "./storage";
   import { get } from "svelte/store";
   import { tick } from "svelte";
@@ -12,11 +13,18 @@
   export let path: number[];
 
   let inputEl: HTMLInputElement | null = null;
+  let dateInputEl: HTMLInputElement | null = null;
   let draftText = node.text;
+  let draftDue = node.due ?? "";
 
   $: pathKey = path.join(".");
   $: editing = ($editingPath?.join(".") ?? "") === pathKey;
+  $: editingDate = ($editingDatePath?.join(".") ?? "") === pathKey;
   $: focused = ($focusedPath?.join(".") ?? "") === pathKey;
+
+  // Display state for the due-date chip (uses the real "now" at runtime).
+  $: dueText = node.due ? dueLabel(node.due) : "";
+  $: dueState = node.due ? dueStatus(node.due) : null;
 
   // When editing becomes true (from anywhere — local dblclick OR external
   // set via keyboard.ts on Enter), seed draftText and focus the input
@@ -29,6 +37,18 @@
       if (inputEl && document.activeElement !== inputEl) {
         inputEl.focus();
         inputEl.select();
+      }
+    });
+  }
+
+  // When the date editor opens (via `d` or chip click), seed the draft with
+  // the current ISO date and focus/select the input once rendered.
+  $: if (editingDate) {
+    draftDue = node.due ?? "";
+    tick().then(() => {
+      if (dateInputEl && document.activeElement !== dateInputEl) {
+        dateInputEl.focus();
+        dateInputEl.select();
       }
     });
   }
@@ -81,6 +101,49 @@
 
   function onRowClick() {
     focusedPath.set(path);
+  }
+
+  function startDateEdit() {
+    editingDatePath.set(path);  // reactive block above seeds + focuses
+  }
+
+  /** Persist a due value (ISO string or null to clear) and close the editor. */
+  function applyDue(due: string | null) {
+    state.update((s) => {
+      setDue(s.items, path, due);
+      scheduleSave(s);
+      return s;
+    });
+    editingDatePath.set(null);
+  }
+
+  function onDateKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const raw = draftDue.trim();
+      if (!raw) { applyDue(null); return; }      // empty → clear the date
+      const iso = parseDate(raw);
+      if (iso) {
+        applyDue(iso);
+      } else {
+        showToast(`Couldn't parse "${raw}"`);     // keep editing so it can be fixed
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      // Reset the draft BEFORE closing: unmounting the focused input fires a
+      // blur, and onDateBlur would otherwise commit whatever was typed. With
+      // the draft reset to the original, that blur is a no-op.
+      draftDue = node.due ?? "";
+      editingDatePath.set(null);                  // cancel, leave the date unchanged
+    }
+  }
+
+  function onDateBlur() {
+    const raw = draftDue.trim();
+    if (!raw) { applyDue(null); return; }         // empty → clear
+    const iso = parseDate(raw);
+    if (iso) applyDue(iso);                        // valid → set
+    else editingDatePath.set(null);               // invalid → close, leave unchanged
   }
 </script>
 
@@ -159,13 +222,38 @@
   {:else}
     <span
       data-tauri-drag-region="false"
-      on:click|stopPropagation={() => { if (!node.text) startEdit(); }}
+      on:click={() => { if (!node.text) startEdit(); }}
       on:dblclick|stopPropagation={startEdit}
       class="text"
       class:placeholder={!node.text}
     >
       {node.text || "—"}
     </span>
+  {/if}
+
+  {#if editingDate}
+    <input
+      type="text"
+      bind:value={draftDue}
+      bind:this={dateInputEl}
+      data-tauri-drag-region="false"
+      placeholder="Jun 19, fri, today, 2026-06-19…"
+      on:click|stopPropagation
+      on:blur={onDateBlur}
+      on:keydown={onDateKeydown}
+      class="due-edit"
+    />
+  {:else if node.due}
+    <button
+      class="due-chip"
+      class:overdue={dueState === "overdue"}
+      class:today={dueState === "today"}
+      data-tauri-drag-region="false"
+      on:click|stopPropagation={startDateEdit}
+      title="Edit due date"
+    >
+      {dueText}
+    </button>
   {/if}
 
   <button
@@ -261,13 +349,14 @@
   /* Label */
   .text {
     flex: 1;
+    min-width: 0; /* let flex shrink instead of pushing the row wider */
     padding: 0;
     color: var(--fg);
     line-height: 1.2;
     transition: color 140ms ease, opacity 140ms ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .edit {
     line-height: 1.2;
@@ -333,6 +422,47 @@
     letter-spacing: inherit;
     caret-color: var(--accent);
   }
+
+  /* Due-date chip: compact, muted by default; tints for overdue/today.
+     Sits between the label (flex:1) and the expander, so it rides the
+     right edge of the row. */
+  .due-chip {
+    flex-shrink: 0;
+    margin: 0 8px 0 8px;
+    padding: 1px 6px;
+    border: none;
+    border-radius: 4px;
+    background: var(--row-hover);
+    color: var(--fg-muted);
+    font-family: inherit;
+    font-size: 0.82em;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 120ms ease, background-color 120ms ease;
+  }
+  .due-chip:hover { color: var(--fg); background: rgba(255, 255, 255, 0.08); }
+  .due-chip.today { color: var(--accent); }
+  .due-chip.overdue { color: var(--warn); }
+  .row.done .due-chip { color: var(--fg-faint); }
+
+  /* Due-date editor: same minimal-chrome treatment as the text editor, but
+     fixed-width and right-aligned where the chip would sit. */
+  .due-edit {
+    flex-shrink: 0;
+    width: 11em;
+    margin: 0 8px 0 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    outline: none;
+    padding: 0 0 1px 0;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: 0.85em;
+    caret-color: var(--accent);
+  }
+  .due-edit::placeholder { color: var(--fg-faint); }
 
   /* Drag state */
   .row.dragging { opacity: 0.35; }

@@ -43,6 +43,11 @@ fn restore_window(app: &tauri::AppHandle) {
     if let Some(p) = pos {
       let _ = win.set_position(p);
     }
+    // Re-assert always-on-top: a hide/show round-trip on X11 and most
+    // Wayland compositors drops the override-redirect / above hint, so
+    // the window comes back as a normal stacked toplevel even though
+    // tauri.conf.json declared alwaysOnTop=true at creation time.
+    let _ = win.set_always_on_top(true);
     let _ = win.set_focus();
   }
 }

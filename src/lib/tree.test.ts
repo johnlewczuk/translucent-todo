@@ -11,6 +11,7 @@ import {
   toggleDone,
   toggleCollapsed,
   setText,
+  setDue,
   type Node,
 } from "./tree";
 
@@ -198,6 +199,21 @@ describe("setText", () => {
     const items = [newNode("a")];
     setText(items, [0], "renamed");
     expect(items[0].text).toBe("renamed");
+  });
+});
+
+describe("setDue", () => {
+  it("sets the due date", () => {
+    const items = [newNode("a")];
+    setDue(items, [0], "2026-06-10");
+    expect(items[0].due).toBe("2026-06-10");
+  });
+
+  it("clears the due date when given null", () => {
+    const items = [newNode("a")];
+    items[0].due = "2026-06-10";
+    setDue(items, [0], null);
+    expect(items[0].due).toBeUndefined();
   });
 });
 

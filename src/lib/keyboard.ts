@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import { tick } from "svelte";
 import { invoke } from "@tauri-apps/api/core";
-import { state, focusedPath, editingPath, mode, helpOpen } from "./stores";
+import { state, focusedPath, editingPath, editingDatePath, mode, helpOpen } from "./stores";
 import { scheduleSave } from "./storage";
 import {
   addSiblingAfter,
@@ -12,8 +12,21 @@ import {
   toggleCollapsed,
   setText,
   newNode,
+  findParentAndIndex,
   type Node,
 } from "./tree";
+
+/** Swap a row with its previous/next sibling. Returns the new path or null
+ *  if the row is already at the edge of its parent's children. */
+function moveSibling(items: Node[], path: number[], delta: -1 | 1): number[] | null {
+  if (path.length === 0) return null;
+  const [parent, idx] = findParentAndIndex(items, path);
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= parent.length) return null;
+  const [node] = parent.splice(idx, 1);
+  parent.splice(newIdx, 0, node);
+  return [...path.slice(0, -1), newIdx];
+}
 
 function flattenPaths(items: Node[], prefix: number[] = []): number[][] {
   const out: number[][] = [];
@@ -104,6 +117,10 @@ export function installKeyboardHandler(): () => void {
       }
       return;
     }
+
+    // While editing a due date, the inline date input owns every key
+    // (Enter/Esc/typing handled by its own keydown). Stay out of the way.
+    if (get(editingDatePath) !== null) return;
 
     const target = e.target as HTMLElement | null;
     const inInput = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA");
@@ -219,6 +236,21 @@ export function installKeyboardHandler(): () => void {
       return;
     }
 
+    // Alt+Up / Alt+Down: reorder the focused row within its parent.
+    if (e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      e.preventDefault();
+      const fp = get(focusedPath);
+      if (!fp) return;
+      const delta: -1 | 1 = e.key === "ArrowUp" ? -1 : 1;
+      state.update((s) => {
+        const np = moveSibling(s.items, fp, delta);
+        if (np !== null) focusedPath.set(np);
+        scheduleSave(s);
+        return s;
+      });
+      return;
+    }
+
     // Arrow navigation works even when nothing is focused — first press
     // selects an end of the list.
     if (e.key === "ArrowDown") {
@@ -295,6 +327,13 @@ export function installKeyboardHandler(): () => void {
         scheduleSave(s);
         return s;
       });
+    } else if (e.key === "d" || e.key === "D") {
+      // Open the inline due-date editor on the focused row (headers included).
+      const node = getNodeAt(get(state).items, path);
+      if (node) {
+        e.preventDefault();
+        editingDatePath.set(path);
+      }
     }
   }
 

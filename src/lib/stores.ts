@@ -14,6 +14,7 @@ export const helpOpen = writable<boolean>(false);
 export const windowFocused = writable<boolean>(true);
 export const focusedPath = writable<number[] | null>(null);
 export const editingPath = writable<number[] | null>(null);
+export const editingDatePath = writable<number[] | null>(null);
 export const dragState = writable<{
   fromPath: number[];
   hoverPath: number[] | null;
