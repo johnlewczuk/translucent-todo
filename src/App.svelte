@@ -2,10 +2,11 @@
   import { onMount, tick } from "svelte";
   import { get } from "svelte/store";
   import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
-  import { state, mode, showToast } from "./lib/stores";
+  import { state, mode, showToast, view } from "./lib/stores";
   import { loadState, scheduleSave } from "./lib/storage";
   import type { Node } from "./lib/tree";
   import TodoItem from "./lib/TodoItem.svelte";
+  import Agenda from "./lib/Agenda.svelte";
   import Toast from "./lib/Toast.svelte";
   import Pill from "./lib/Pill.svelte";
   import Help from "./lib/Help.svelte";
@@ -97,6 +98,9 @@
       if (total > widest) widest = total;
     });
     let desiredW = Math.max(MIN_W, Math.min(MAX_W, widest));
+    // The width measurer only counts row text; agenda rows are chip-heavy and
+    // have group dividers with no text, so floor the width to avoid wrapping.
+    if (get(view) === "agenda") desiredW = Math.max(desiredW, 260);
     if (get(helpOpen)) desiredW = Math.max(desiredW, HELP_MIN_W);
 
     await win.setSize(new LogicalSize(desiredW, desiredH));
@@ -136,6 +140,7 @@
 
     const modeUnsub = mode.subscribe(() => { syncWindowSize(); });
     const helpUnsub = helpOpen.subscribe(() => { syncWindowSize(); });
+    const viewUnsub = view.subscribe(() => { syncWindowSize(); });
 
     // Safety-net: any state change (item count, collapsed, font_size, etc.)
     // re-syncs window size. ResizeObserver should cover content-height
@@ -188,6 +193,7 @@
       ro.disconnect();
       modeUnsub();
       helpUnsub();
+      viewUnsub();
       stateUnsub();
       unlistenFocus();
       window.removeEventListener("mousedown", onMouseDown);
@@ -208,9 +214,13 @@
     <div class="badge" aria-hidden="true"></div>
     <div class="list" bind:this={listEl}>
       <div class="list-inner" bind:this={listInnerEl}>
-        {#each flatten($state.items) as row (row.node.id)}
-          <TodoItem node={row.node} depth={row.depth} path={row.path} />
-        {/each}
+        {#if $view === "agenda"}
+          <Agenda />
+        {:else}
+          {#each flatten($state.items) as row (row.node.id)}
+            <TodoItem node={row.node} depth={row.depth} path={row.path} />
+          {/each}
+        {/if}
       </div>
     </div>
     <Toast />
