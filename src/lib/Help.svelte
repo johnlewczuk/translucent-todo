@@ -8,6 +8,7 @@
     ["Space", "Toggle done"],
     ["Delete", "Remove row"],
     ["D", "Set / edit due date"],
+    ["A", "Agenda (due-date view)"],
     ["↑ / ↓", "Move focus"],
     ["Alt ↑ / ↓", "Move row up / down"],
     ["→", "Expand / enter child"],
