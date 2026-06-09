@@ -61,6 +61,7 @@
       {#if agenda[group.key].length > 0}
         <div class="group-label">{group.label}</div>
         {#each agenda[group.key] as entry (entry.node.id)}
+          {@const cs = chipState(entry.node)}
           <div class="row" class:done={entry.node.done}>
             {#if !entry.node.is_header}
               <button
@@ -70,13 +71,19 @@
                 aria-label={entry.node.done ? "Mark as not done" : "Mark as done"}
               ></button>
             {/if}
-            <span class="text" on:click={() => jump(entry)} role="button" tabindex="0">
+            <span
+              class="text"
+              on:click={() => jump(entry)}
+              on:keydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); jump(entry); } }}
+              role="button"
+              tabindex="0"
+            >
               {entry.node.text || "—"}
             </span>
             <span
               class="due-chip"
-              class:overdue={chipState(entry.node) === "overdue"}
-              class:today={chipState(entry.node) === "today"}
+              class:overdue={cs === "overdue"}
+              class:today={cs === "today"}
             >
               {dueLabel(entry.node.due!)}
             </span>
