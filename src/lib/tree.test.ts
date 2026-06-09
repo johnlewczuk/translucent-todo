@@ -12,6 +12,7 @@ import {
   toggleCollapsed,
   setText,
   setDue,
+  expandAncestors,
   type Node,
 } from "./tree";
 
@@ -271,5 +272,31 @@ describe("moveNode", () => {
     moveNode(items, [1], [0], "after");
     expect(items[1].text).toBe("b");
     expect(items[1].children[0].text).toBe("b.0");
+  });
+});
+
+describe("expandAncestors", () => {
+  it("un-collapses every ancestor of a path but not the leaf itself", () => {
+    const items = [
+      {
+        id: "a", text: "a", done: false, collapsed: true, children: [
+          {
+            id: "b", text: "b", done: false, collapsed: true, children: [
+              { id: "c", text: "c", done: false, collapsed: true, children: [] },
+            ],
+          },
+        ],
+      },
+    ];
+    expandAncestors(items, [0, 0, 0]);
+    expect(items[0].collapsed).toBe(false);            // ancestor a
+    expect(items[0].children[0].collapsed).toBe(false); // ancestor b
+    expect(items[0].children[0].children[0].collapsed).toBe(true); // leaf c untouched
+  });
+
+  it("is a no-op for a root-level path", () => {
+    const items = [{ id: "a", text: "a", done: false, collapsed: true, children: [] }];
+    expandAncestors(items, [0]);
+    expect(items[0].collapsed).toBe(true);
   });
 });

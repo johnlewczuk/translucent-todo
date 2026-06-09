@@ -112,6 +112,18 @@ export function setDue(items: Node[], path: number[], due: string | null): void 
   }
 }
 
+/** Un-collapse every ancestor along `path` so the target row will render.
+ *  Leaves the target node's own `collapsed` flag untouched. */
+export function expandAncestors(items: Node[], path: number[]): void {
+  let cur: Node[] = items;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = cur[path[i]];
+    if (!node) return;
+    node.collapsed = false;
+    cur = node.children;
+  }
+}
+
 function isDescendant(items: Node[], ancestorPath: number[], maybeDescendant: number[]): boolean {
   if (maybeDescendant.length <= ancestorPath.length) return false;
   for (let i = 0; i < ancestorPath.length; i++) {
