@@ -63,5 +63,84 @@ It remains runnable for reference.
 
 ## Tests
 
-    npm test                                # Vitest, tree-mutation suite (30 tests)
-    cd src-tauri && cargo test --lib        # Rust storage suite (5 tests)
+    npm test                                # Vitest: tree, dates, agenda, release scripts
+    cd src-tauri && cargo test --lib        # Rust storage suite
+
+
+## Commit messages
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
+This is not bookkeeping for its own sake — the release scripts read these
+messages to decide the next version number, so the prefix you write *is* the
+version bump.
+
+    <type>[optional scope][!]: <description>
+
+    [optional body]
+
+    [optional BREAKING CHANGE: <what broke>]
+
+| Type       | Meaning                                        | Version effect |
+|------------|------------------------------------------------|----------------|
+| `feat`     | New user-visible capability                     | minor          |
+| `fix`      | Bug fix                                         | patch          |
+| `perf`     | Faster or lighter, same behaviour               | patch          |
+| `refactor` | Restructuring with no behaviour change          | none           |
+| `docs`     | Documentation only                              | none           |
+| `test`     | Tests only                                      | none           |
+| `build`    | Build system, bundling, dependencies            | none           |
+| `chore`    | Housekeeping                                    | none           |
+| `style`    | Formatting, whitespace                          | none           |
+
+A `!` after the type (or a `BREAKING CHANGE:` footer) marks a breaking change.
+
+Examples:
+
+    feat(agenda): group dated items by due status
+    fix: keep the cursor in the input when Tab is pressed while editing
+    perf: memoize the agenda grouping
+    docs: document the release scripts
+
+    feat(storage)!: move todos.json under XDG_STATE_HOME
+
+    BREAKING CHANGE: existing todos.json must be moved by hand from
+    ~/.local/share/translucent-todo/ to ~/.local/state/translucent-todo/.
+
+Only the **first line** is parsed for the type, so a body may mention `feat:`
+in prose without triggering a bump. Commits with no recognised type are
+ignored by the release scripts.
+
+## Releasing
+
+Three scripts, each the previous one plus a step:
+
+    npm run release:version     # decide version -> stamp manifests -> commit -> tag
+    npm run release             # ...and then `npm run tauri build`
+    npm run release:install     # ...and then `sudo dpkg -i` the built .deb
+
+Flags pass through (note the `--` npm needs):
+
+    npm run release:version -- --dry-run              # print the decision, change nothing
+    npm run release:version -- --release-as 1.0.0     # override the computed version
+
+What `release:version` does:
+
+1. Refuses to run if tracked files are dirty, or if `HEAD` is already tagged.
+2. Reads every commit since the last `v*` tag (or the whole history if there
+   is no tag yet) and takes the largest bump any of them calls for. No
+   `feat`/`fix`/`perf`/breaking commit means nothing to release — it exits
+   without tagging.
+3. Writes the new version into all four manifests that carry it:
+   `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and the
+   `app` entry in `src-tauri/Cargo.lock`.
+4. Commits that as `chore(release): vX.Y.Z` and creates an annotated tag
+   `vX.Y.Z` whose message is the grouped release notes.
+
+**Below 1.0.0, a breaking change bumps the minor**, not the major — semver
+makes no stability promise for `0.x`. Reaching `1.0.0` is a deliberate act:
+`--release-as 1.0.0`.
+
+The bump rules and the manifest edits are pure functions in
+[`scripts/semver.mjs`](scripts/semver.mjs) and
+[`scripts/manifests.mjs`](scripts/manifests.mjs), covered by the Vitest suite
+along with the shell scripts themselves.

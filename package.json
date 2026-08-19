@@ -10,7 +10,10 @@
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "tauri": "tauri",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "release:version": "bash scripts/version.sh",
+    "release": "bash scripts/release.sh",
+    "release:install": "bash scripts/install.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.0"
