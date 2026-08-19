@@ -103,6 +103,36 @@ describe('release.sh', () => {
     expect(tags()).toEqual([])
     expect(calls()).not.toContain('npm')
   })
+
+  test('--allow-unreleased builds the existing version when there is nothing to release', () => {
+    const r = run('release.sh', '--allow-unreleased')
+
+    expect(r.status).toBe(0)
+    expect(tags()).toEqual([])
+    expect(calls()).toContain('npm run tauri build')
+    expect(r.stdout).toMatch(/nothing to release/i)
+  })
+
+  test('--allow-unreleased still versions and tags when there is something to release', () => {
+    featCommit()
+
+    const r = run('release.sh', '--allow-unreleased')
+
+    expect(r.status).toBe(0)
+    expect(tags()).toEqual(['v0.2.0'])
+    expect(calls()).toContain('npm run tauri build')
+  })
+
+  test('--allow-unreleased still refuses a dirty tree', () => {
+    featCommit()
+    writeFileSync(join(repo, 'a.txt'), 'edited')
+
+    const r = run('release.sh', '--allow-unreleased')
+
+    expect(r.status).not.toBe(0)
+    expect(calls()).not.toContain('npm')
+    expect(tags()).toEqual([])
+  })
 })
 
 describe('install.sh', () => {
@@ -125,5 +155,24 @@ describe('install.sh', () => {
     expect(r.status).toBe(0)
     expect(calls()).toBe('')
     expect(tags()).toEqual([])
+  })
+
+  test('installs the existing version when there is nothing to release', () => {
+    const r = run('install.sh')
+
+    expect(r.status).toBe(0)
+    expect(tags()).toEqual([])
+    expect(calls()).toContain('npm run tauri build')
+    expect(calls()).toMatch(/sudo dpkg -i .*translucent-todo_0\.1\.0_amd64\.deb/)
+  })
+
+  test('refuses to install off a dirty tree', () => {
+    featCommit()
+    writeFileSync(join(repo, 'a.txt'), 'edited')
+
+    const r = run('install.sh')
+
+    expect(r.status).not.toBe(0)
+    expect(calls()).toBe('')
   })
 })

@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 #
-# Version, tag, build, and install.
+# Version, tag, build, and install the .deb on this machine.
 #
 #   ./scripts/install.sh [--dry-run] [--release-as X.Y.Z]
 #
-# Everything release.sh does, then installs the freshly built .deb with dpkg so
-# the app-menu entry and icon are registered. Prompts for sudo.
+# Everything release.sh does, then `dpkg -i` the bundle it produced. Wanting
+# the app on your machine is not the same as wanting to cut a release, so this
+# passes --allow-unreleased: with nothing new to release it builds and installs
+# the version already in the tree rather than refusing.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-"$SCRIPT_DIR/release.sh" "$@"
+"$SCRIPT_DIR/release.sh" --allow-unreleased "$@"
 
 for arg in "$@"; do
   if [ "$arg" = "--dry-run" ]; then

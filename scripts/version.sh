@@ -5,13 +5,17 @@
 #
 #   ./scripts/version.sh [--dry-run] [--release-as X.Y.Z]
 #
-# Exits 3 when no commit since the last tag warrants a release.
+# Exits 3 when there is nothing to release: HEAD is already tagged, or nothing
+# since the last tag warrants a bump. Callers use that code to tell "nothing to
+# do" apart from "you did something wrong".
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# The header comment above is the usage text: everything from the line after
+# the shebang's blank comment up to the first line that isn't a comment.
 usage() {
-  sed -n '3,9p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,${/^[^#]/q;s/^# \{0,1\}//p;}' "${BASH_SOURCE[0]}"
 }
 
 DRY_RUN=""
@@ -36,8 +40,8 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 
 if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
-  echo "Refusing to release: HEAD is already tagged $(git describe --exact-match --tags HEAD). Commit something first." >&2
-  exit 1
+  echo "Nothing to release: HEAD is already tagged $(git describe --exact-match --tags HEAD). Commit something first." >&2
+  exit 3
 fi
 
 LAST_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"

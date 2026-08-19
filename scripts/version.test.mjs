@@ -102,7 +102,7 @@ describe('version.sh', () => {
 
     const r = run(repo)
 
-    expect(r.status).not.toBe(0)
+    expect(r.status).toBe(3)
     expect(r.stderr + r.stdout).toMatch(/nothing to release/i)
     expect(tags()).toEqual([])
     expect(read('package.json')).toContain('"version": "0.0.0"')
@@ -162,7 +162,15 @@ describe('version.sh', () => {
     expect(read('package.json')).toContain('"version": "1.0.0"')
   })
 
-  test('refuses when HEAD is already tagged', () => {
+  test('--help prints the header comment and nothing else', () => {
+    const r = run(repo, '--help')
+
+    expect(r.status).toBe(0)
+    expect(r.stdout).toContain('./scripts/version.sh [--dry-run] [--release-as X.Y.Z]')
+    expect(r.stdout).not.toContain('set -euo')
+  })
+
+  test('an already-tagged HEAD is nothing to release, not an error', () => {
     writeFileSync(join(repo, 'a.txt'), 'a')
     git(repo, 'add', '-A')
     commit(repo, 'feat: agenda view')
@@ -170,7 +178,8 @@ describe('version.sh', () => {
 
     const r = run(repo, '--release-as', '9.9.9')
 
-    expect(r.status).not.toBe(0)
+    expect(r.status).toBe(3)
+    expect(r.stderr).toMatch(/nothing to release/i)
     expect(r.stderr).toMatch(/already tagged/i)
     expect(tags()).toEqual(['v0.2.0'])
   })
