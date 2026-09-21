@@ -5,6 +5,7 @@ export type Node = {
   collapsed: boolean;
   is_header?: boolean;  // when true: no checkbox, header styling, lives at root depth
   due?: string;         // optional due date as ISO "YYYY-MM-DD"; absent when none
+  color?: string;       // optional ROW_COLORS key tinting the text; absent = default fg
   children: Node[];
 };
 
@@ -109,6 +110,38 @@ export function setDue(items: Node[], path: number[], due: string | null): void 
     delete n.due;
   } else {
     n.due = due;
+  }
+}
+
+/** Text tints a row can cycle through, in hue-wheel order. Pastel accents
+ *  (Catppuccin Mocha) so they stay legible on the dark translucent glass and
+ *  under the text-shadow halo. The key is what gets persisted, so hexes can
+ *  be retuned without migrating saved state. */
+export const ROW_COLORS: readonly { key: string; hex: string }[] = [
+  { key: "red", hex: "#f38ba8" },
+  { key: "peach", hex: "#fab387" },
+  { key: "yellow", hex: "#f9e2af" },
+  { key: "green", hex: "#a6e3a1" },
+  { key: "sky", hex: "#89dceb" },
+  { key: "blue", hex: "#89b4fa" },
+  { key: "mauve", hex: "#cba6f7" },
+];
+
+export function rowColor(key: string | undefined): string | null {
+  return ROW_COLORS.find((c) => c.key === key)?.hex ?? null;
+}
+
+/** Step the row's colour through [none, ...ROW_COLORS], wrapping both ways.
+ *  An unrecognised stored key counts as "none". */
+export function cycleColor(items: Node[], path: number[], delta: -1 | 1): void {
+  const n = getNode(items, path);
+  const slots = ROW_COLORS.length + 1;             // slot 0 = no colour
+  const cur = ROW_COLORS.findIndex((c) => c.key === n.color) + 1;
+  const next = (cur + delta + slots) % slots;
+  if (next === 0) {
+    delete n.color;
+  } else {
+    n.color = ROW_COLORS[next - 1].key;
   }
 }
 

@@ -13,6 +13,9 @@ import {
   setText,
   setDue,
   expandAncestors,
+  cycleColor,
+  rowColor,
+  ROW_COLORS,
   type Node,
 } from "./tree";
 
@@ -298,5 +301,47 @@ describe("expandAncestors", () => {
     const items = [{ id: "a", text: "a", done: false, collapsed: true, children: [] }];
     expandAncestors(items, [0]);
     expect(items[0].collapsed).toBe(true);
+  });
+});
+
+describe("cycleColor", () => {
+  it("steps forward through the palette and wraps back to no colour", () => {
+    const items = [newNode("a")];
+    const seen: (string | undefined)[] = [];
+    for (let i = 0; i <= ROW_COLORS.length; i++) {
+      cycleColor(items, [0], 1);
+      seen.push(items[0].color);
+    }
+    expect(seen).toEqual([...ROW_COLORS.map((c) => c.key), undefined]);
+    expect("color" in items[0]).toBe(false);
+  });
+
+  it("steps backward from no colour to the last palette entry", () => {
+    const items = [newNode("a")];
+    cycleColor(items, [0], -1);
+    expect(items[0].color).toBe(ROW_COLORS[ROW_COLORS.length - 1].key);
+  });
+
+  it("treats an unknown stored key as no colour", () => {
+    const items = [newNode("a")];
+    items[0].color = "chartreuse";
+    cycleColor(items, [0], 1);
+    expect(items[0].color).toBe(ROW_COLORS[0].key);
+  });
+
+  it("colours nested rows", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("b"));
+    cycleColor(items, [0, 0], 1);
+    expect(items[0].children[0].color).toBe(ROW_COLORS[0].key);
+    expect(items[0].color).toBeUndefined();
+  });
+});
+
+describe("rowColor", () => {
+  it("resolves a key to its hex and unknown/absent keys to null", () => {
+    expect(rowColor(ROW_COLORS[0].key)).toBe(ROW_COLORS[0].hex);
+    expect(rowColor(undefined)).toBeNull();
+    expect(rowColor("nope")).toBeNull();
   });
 });

@@ -36,6 +36,7 @@ Or install the `.deb` via `sudo dpkg -i ...` and launch from your app menu.
 | Shift+Tab      | Outdent                           |
 | Space          | Toggle done                       |
 | Delete         | Remove row + subtree              |
+| C / Shift+C    | Cycle text colour fwd / back      |
 | Double-click   | Edit text                         |
 | F2             | Edit text                         |
 | ↑ / ↓          | Move focus                        |

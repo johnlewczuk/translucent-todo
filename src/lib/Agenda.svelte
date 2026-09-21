@@ -1,7 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { state, focusedPath, view } from "./stores";
-  import { toggleDone, expandAncestors, type Node } from "./tree";
+  import { toggleDone, expandAncestors, rowColor, type Node } from "./tree";
   import { scheduleSave } from "./storage";
   import { buildAgenda, type AgendaEntry } from "./agenda";
   import { dueLabel, dueStatus } from "./dates";
@@ -62,7 +62,7 @@
         <div class="group-label">{group.label}</div>
         {#each agenda[group.key] as entry (entry.node.id)}
           {@const cs = chipState(entry.node)}
-          <div class="row" class:done={entry.node.done}>
+          <div class="row" class:done={entry.node.done} style:--row-color={rowColor(entry.node.color)}>
             {#if !entry.node.is_header}
               <button
                 class="check"
@@ -141,7 +141,7 @@
   .text {
     flex: 1;
     min-width: 0;
-    color: var(--fg);
+    color: var(--row-color, var(--fg));
     line-height: 1.2;
     cursor: pointer;
     overflow-wrap: anywhere;

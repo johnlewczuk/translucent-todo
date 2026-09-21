@@ -10,6 +10,7 @@ import {
   deleteNode,
   toggleDone,
   toggleCollapsed,
+  cycleColor,
   setText,
   newNode,
   findParentAndIndex,
@@ -343,6 +344,14 @@ export function installKeyboardHandler(): () => void {
       state.update((s) => {
         const np = deleteNode(s.items, path);
         focusedPath.set(np);
+        scheduleSave(s);
+        return s;
+      });
+    } else if ((e.key === "c" || e.key === "C") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Cycle the focused row's text colour; Shift steps backward.
+      e.preventDefault();
+      state.update((s) => {
+        cycleColor(s.items, path, e.shiftKey ? -1 : 1);
         scheduleSave(s);
         return s;
       });

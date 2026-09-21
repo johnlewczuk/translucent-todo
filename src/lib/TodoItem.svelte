@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Node } from "./tree";
-  import { toggleDone, toggleCollapsed, setText, setDue } from "./tree";
+  import { toggleDone, toggleCollapsed, setText, setDue, rowColor } from "./tree";
   import { parseDate, dueLabel, dueStatus } from "./dates";
   import { state, editingPath, editingDatePath, focusedPath, dragState, showToast } from "./stores";
   import { scheduleSave } from "./storage";
@@ -157,6 +157,7 @@
   class:drop-child={$dragState?.hoverPath?.join(",") === path.join(",") && $dragState?.position === "child"}
   class:dragging={$dragState?.fromPath?.join(",") === path.join(",")}
   data-path={path.join(",")}
+  style:--row-color={rowColor(node.color)}
   on:click={onRowClick}
   role="treeitem"
   tabindex="0"
@@ -351,7 +352,7 @@
     flex: 1;
     min-width: 0; /* let flex shrink instead of pushing the row wider */
     padding: 0;
-    color: var(--fg);
+    color: var(--row-color, var(--fg));
     line-height: 1.2;
     transition: color 140ms ease, opacity 140ms ease;
     white-space: normal;
@@ -378,7 +379,7 @@
     font-weight: 600;
     font-size: 1.05em;
     letter-spacing: -0.01em;
-    color: var(--fg);
+    color: var(--row-color, var(--fg));
   }
   .text.placeholder {
     color: var(--fg-faint);
@@ -415,7 +416,7 @@
     border: none;
     outline: none;
     padding: 0;
-    color: var(--fg);
+    color: var(--row-color, var(--fg));
     font-family: inherit;
     font-size: inherit;
     font-weight: inherit;

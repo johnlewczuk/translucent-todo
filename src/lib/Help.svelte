@@ -8,6 +8,7 @@
     ["Space", "Toggle done"],
     ["Delete", "Remove row"],
     ["D", "Set / edit due date"],
+    ["C / ⇧ C", "Cycle text colour"],
     ["A", "Agenda (due-date view)"],
     ["↑ / ↓", "Move focus"],
     ["Alt ↑ / ↓", "Move row up / down"],
