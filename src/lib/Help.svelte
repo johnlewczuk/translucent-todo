@@ -22,10 +22,23 @@
     ["Esc", "Cancel"],
   ];
 
+  let panel: HTMLDivElement;
+  const SCROLL_STEP = 40; // px per arrow press
+
   function close() {
     helpOpen.set(false);
   }
+
+  // The global handler ignores everything but Esc while help is open, so the
+  // panel owns arrow-key scrolling itself.
+  function onKeydown(e: KeyboardEvent) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    panel?.scrollBy({ top: e.key === "ArrowDown" ? SCROLL_STEP : -SCROLL_STEP, behavior: "smooth" });
+  }
 </script>
+
+<svelte:window on:keydown={onKeydown} />
 
 <div
   class="overlay"
@@ -35,7 +48,7 @@
   aria-modal="true"
   aria-label="Keyboard shortcuts"
 >
-  <div class="panel" on:click|stopPropagation role="document">
+  <div class="panel" bind:this={panel} on:click|stopPropagation role="document">
     <div class="title">Keyboard</div>
     <dl>
       {#each shortcuts as [key, desc]}
