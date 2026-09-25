@@ -41,7 +41,7 @@ Or install the `.deb` via `sudo dpkg -i ...` and launch from your app menu.
 | F2             | Edit text                         |
 | ↑ / ↓          | Move focus                        |
 | Esc            | Cancel edit / cancel drag         |
-| Ctrl+M         | Toggle pill mode                  |
+| Ctrl+M         | Minimize                          |
 
 ## Drag
 

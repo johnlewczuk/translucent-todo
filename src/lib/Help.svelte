@@ -15,7 +15,7 @@
     ["→", "Expand / enter child"],
     ["←", "Collapse / parent"],
     ["Dbl-click", "Edit text"],
-    ["⌃ M", "Hide to tray"],
+    ["⌃ M", "Minimize"],
     ["⌃ + / -", "Font size"],
     ["⌃ 0", "Reset font"],
     ["H", "This help"],

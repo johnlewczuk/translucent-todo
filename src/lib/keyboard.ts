@@ -298,8 +298,8 @@ export function installKeyboardHandler(): () => void {
 
     if (e.key === "m" && e.ctrlKey) {
       e.preventDefault();
-      // Hide to the system tray (saves position so restore puts us back exactly).
-      invoke("hide_to_tray");
+      // Minimize to the taskbar (the entry stays; clicking it restores).
+      invoke("minimize_window");
       return;
     }
 
