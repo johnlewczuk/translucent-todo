@@ -12,6 +12,7 @@
   export let depth: number;
   export let path: number[];
 
+  let rowEl: HTMLDivElement | null = null;
   let inputEl: HTMLInputElement | null = null;
   let dateInputEl: HTMLInputElement | null = null;
   let draftText = node.text;
@@ -21,6 +22,15 @@
   $: editing = ($editingPath?.join(".") ?? "") === pathKey;
   $: editingDate = ($editingDatePath?.join(".") ?? "") === pathKey;
   $: focused = ($focusedPath?.join(".") ?? "") === pathKey;
+
+  // Keep the focused row visible when arrow keys move focus offscreen.
+  // Only on the false→true transition, so re-renders don't yank the scroll.
+  let wasFocused = false;
+  $: {
+    // tick(): a freshly created row (Enter) isn't bound to rowEl yet.
+    if (focused && !wasFocused) tick().then(() => rowEl?.scrollIntoView({ block: "nearest" }));
+    wasFocused = focused;
+  }
 
   // Display state for the due-date chip (uses the real "now" at runtime).
   $: dueText = node.due ? dueLabel(node.due) : "";
@@ -148,6 +158,7 @@
 </script>
 
 <div
+  bind:this={rowEl}
   class="row"
   class:focused
   class:done={node.done}
