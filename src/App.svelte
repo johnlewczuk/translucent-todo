@@ -12,6 +12,7 @@
   import Help from "./lib/Help.svelte";
   import { helpOpen, windowFocused } from "./lib/stores";
   import { installKeyboardHandler } from "./lib/keyboard";
+  import { installExternalSync } from "./lib/sync";
 
   let rootEl: HTMLElement;
   let listEl: HTMLElement;
@@ -188,6 +189,7 @@
     const unlistenFocus = await win.onFocusChanged(({ payload: focused }) => {
       windowFocused.set(focused);
     });
+    const stopSync = await installExternalSync();
 
     return () => {
       cleanup();
@@ -197,6 +199,7 @@
       viewUnsub();
       stateUnsub();
       unlistenFocus();
+      stopSync();
       window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);

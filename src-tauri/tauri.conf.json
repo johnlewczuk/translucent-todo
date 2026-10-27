@@ -42,6 +42,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/bin/todo": "../dist-cli/todo.mjs"
+        }
+      }
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

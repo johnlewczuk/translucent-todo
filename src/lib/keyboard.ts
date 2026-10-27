@@ -11,6 +11,7 @@ import {
   toggleDone,
   toggleCollapsed,
   cycleColor,
+  setHeader,
   setText,
   newNode,
   findParentAndIndex,
@@ -171,7 +172,7 @@ export function installKeyboardHandler(): () => void {
             if (outdented !== null) {
               np = outdented;
             } else if (node && !node.is_header && fp.length === 1) {
-              node.is_header = true;
+              setHeader(s.items, fp, true);
               np = fp;
             } else {
               np = null;
@@ -179,7 +180,7 @@ export function installKeyboardHandler(): () => void {
           } else {
             // Tab ladder: header → become root todo; otherwise indent
             if (node?.is_header) {
-              node.is_header = false;
+              setHeader(s.items, fp, false);
               np = fp;
             } else {
               np = indent(s.items, fp);

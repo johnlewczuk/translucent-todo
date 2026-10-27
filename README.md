@@ -57,6 +57,26 @@ atomic. If the file ever fails to parse it is renamed to
 `todos.json.broken-<timestamp>` and a fresh empty state is created — your
 data is preserved for recovery; nothing is ever deleted.
 
+## CLI
+
+The `.deb` also installs `todo`, a command-line client for the same data
+(needs `node` on your `PATH`). It's built from the same `src/lib` tree and
+date code as the overlay, so they follow the same rules.
+
+    todo ls                          # tree with item ids
+    todo agenda                      # overdue / today / upcoming
+    todo add "call mum" --after 023515 --due fri
+    todo set 023515 055562 --done
+    todo mv 023515 --before 49bee8
+    todo rm 023515
+    todo undo                        # revert the last todo command
+    todo help                        # everything else
+
+The overlay picks up CLI changes live. Writes from both sides take
+`todos.json.lock`, and the overlay refuses to save over a change it hasn't
+loaded yet: it reloads instead, and toasts if a just-made edit had to be
+dropped. Build it alone with `npm run build:cli` (output: `dist-cli/todo.mjs`).
+
 ## Legacy GTK version
 
 The original GTK4 + Python implementation lives in [`legacy-gtk/`](legacy-gtk/).
@@ -64,7 +84,7 @@ It remains runnable for reference.
 
 ## Tests
 
-    npm test                                # Vitest: tree, dates, agenda, release scripts
+    npm test                                # Vitest: tree, dates, agenda, CLI, release scripts
     cd src-tauri && cargo test --lib        # Rust storage suite
 
 

@@ -14,6 +14,11 @@ import {
   setDue,
   expandAncestors,
   cycleColor,
+  setColor,
+  setDone,
+  setHeader,
+  findPathById,
+  remapPath,
   rowColor,
   ROW_COLORS,
   type Node,
@@ -343,5 +348,81 @@ describe("rowColor", () => {
     expect(rowColor(ROW_COLORS[0].key)).toBe(ROW_COLORS[0].hex);
     expect(rowColor(undefined)).toBeNull();
     expect(rowColor("nope")).toBeNull();
+  });
+});
+
+describe("findPathById", () => {
+  it("finds a nested node by id", () => {
+    const items = [newNode("a"), newNode("b")];
+    items[1].children.push(newNode("b.0"));
+    expect(findPathById(items, items[1].children[0].id)).toEqual([1, 0]);
+  });
+
+  it("returns null for an unknown id", () => {
+    expect(findPathById([newNode("a")], "zzzzzz")).toBeNull();
+  });
+});
+
+describe("setDone", () => {
+  it("is idempotent", () => {
+    const items = [newNode("a")];
+    setDone(items, [0], true);
+    setDone(items, [0], true);
+    expect(items[0].done).toBe(true);
+    setDone(items, [0], false);
+    expect(items[0].done).toBe(false);
+  });
+});
+
+describe("setColor", () => {
+  it("sets a known colour key", () => {
+    const items = [newNode("a")];
+    setColor(items, [0], "green");
+    expect(items[0].color).toBe("green");
+  });
+
+  it("null removes the colour", () => {
+    const items = [newNode("a")];
+    setColor(items, [0], "green");
+    setColor(items, [0], null);
+    expect("color" in items[0]).toBe(false);
+  });
+
+  it("rejects an unknown key", () => {
+    const items = [newNode("a")];
+    expect(() => setColor(items, [0], "chartreuse")).toThrow(/unknown colour/);
+  });
+});
+
+describe("setHeader", () => {
+  it("turns a root todo into a header and back", () => {
+    const items = [newNode("a")];
+    setHeader(items, [0], true);
+    expect(items[0].is_header).toBe(true);
+    setHeader(items, [0], false);
+    expect("is_header" in items[0]).toBe(false);
+  });
+
+  it("rejects making a nested node a header", () => {
+    const items = [newNode("a")];
+    items[0].children.push(newNode("a.0"));
+    expect(() => setHeader(items, [0, 0], true)).toThrow(/root/);
+  });
+});
+
+describe("remapPath", () => {
+  it("follows a node to its new position by id", () => {
+    const before = [newNode("a"), newNode("b")];
+    const after = [newNode("new"), before[0], before[1]];
+    expect(remapPath(before, after, [1])).toEqual([2]);
+  });
+
+  it("returns null when the node is gone", () => {
+    const before = [newNode("a")];
+    expect(remapPath(before, [], [0])).toBeNull();
+  });
+
+  it("passes null through", () => {
+    expect(remapPath([], [], null)).toBeNull();
   });
 });

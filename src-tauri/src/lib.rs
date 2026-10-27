@@ -1,5 +1,9 @@
 mod commands;
 mod storage;
+mod watch;
+
+use storage::Store;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -12,6 +16,10 @@ pub fn run() {
             .build(),
         )?;
       }
+
+      app.manage(Store::new(commands::state_path()));
+      let watcher = watch::watch_todos(app.handle().clone())?;
+      app.manage(watcher);
 
       Ok(())
     })

@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run build:cli",
+    "build:cli": "vite build -c vite.cli.config.ts && chmod +x dist-cli/todo.mjs",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.cli.json",
     "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",

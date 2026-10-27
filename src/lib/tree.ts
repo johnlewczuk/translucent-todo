@@ -90,9 +90,37 @@ export function deleteNode(items: Node[], path: number[]): number[] | null {
   return null;
 }
 
+/** Path of the node with `id`, or null if no node has it. Ids are stable
+ *  across edits, unlike paths, so out-of-UI callers (the CLI) address by id. */
+export function findPathById(items: Node[], id: string): number[] | null {
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].id === id) return [i];
+    const sub = findPathById(items[i].children, id);
+    if (sub) return [i, ...sub];
+  }
+  return null;
+}
+
+/** Where the node at `path` in `before` sits in `after` (matched by id), or
+ *  null if it's gone. Keeps UI focus on the same row across a reload. */
+export function remapPath(before: Node[], after: Node[], path: number[] | null): number[] | null {
+  if (path === null) return null;
+  let nodes = before;
+  let node: Node | undefined;
+  for (const i of path) {
+    node = nodes[i];
+    if (!node) return null;
+    nodes = node.children;
+  }
+  return node ? findPathById(after, node.id) : null;
+}
+
+export function setDone(items: Node[], path: number[], done: boolean): void {
+  getNode(items, path).done = done;
+}
+
 export function toggleDone(items: Node[], path: number[]): void {
-  const n = getNode(items, path);
-  n.done = !n.done;
+  setDone(items, path, !getNode(items, path).done);
 }
 
 export function toggleCollapsed(items: Node[], path: number[]): void {
@@ -138,10 +166,30 @@ export function cycleColor(items: Node[], path: number[], delta: -1 | 1): void {
   const slots = ROW_COLORS.length + 1;             // slot 0 = no colour
   const cur = ROW_COLORS.findIndex((c) => c.key === n.color) + 1;
   const next = (cur + delta + slots) % slots;
-  if (next === 0) {
+  setColor(items, path, next === 0 ? null : ROW_COLORS[next - 1].key);
+}
+
+/** Set the row's colour to a ROW_COLORS key, or clear it with null. */
+export function setColor(items: Node[], path: number[], key: string | null): void {
+  const n = getNode(items, path);
+  if (key === null) {
     delete n.color;
+  } else if (rowColor(key) === null) {
+    throw new Error(`unknown colour "${key}"`);
   } else {
-    n.color = ROW_COLORS[next - 1].key;
+    n.color = key;
+  }
+}
+
+/** Headers only live at root depth; making a nested node one is an error. */
+export function setHeader(items: Node[], path: number[], isHeader: boolean): void {
+  const n = getNode(items, path);
+  if (!isHeader) {
+    delete n.is_header;
+  } else if (path.length !== 1) {
+    throw new Error("only root items can be headers");
+  } else {
+    n.is_header = true;
   }
 }
 
@@ -157,7 +205,7 @@ export function expandAncestors(items: Node[], path: number[]): void {
   }
 }
 
-function isDescendant(items: Node[], ancestorPath: number[], maybeDescendant: number[]): boolean {
+function isDescendant(ancestorPath: number[], maybeDescendant: number[]): boolean {
   if (maybeDescendant.length <= ancestorPath.length) return false;
   for (let i = 0; i < ancestorPath.length; i++) {
     if (ancestorPath[i] !== maybeDescendant[i]) return false;
@@ -176,7 +224,7 @@ export function moveNode(
   position: "before" | "after" | "child",
 ): number[] {
   if (pathsEqual(fromPath, toPath)) return fromPath;
-  if (isDescendant(items, fromPath, toPath)) return fromPath;
+  if (isDescendant(fromPath, toPath)) return fromPath;
 
   // 1. Detach the source node
   const [fromParent, fromIdx] = findParentAndIndex(items, fromPath);
