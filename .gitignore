@@ -35,3 +35,8 @@ legacy-gtk/__pycache__/
 legacy-gtk/.pytest_cache/
 __pycache__/
 .pytest_cache/
+
+# Planning/spec working docs: kept locally, never published
+docs/plans/
+docs/specs/
+docs/superpowers/
